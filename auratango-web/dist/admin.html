@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>AuraTango · Content Studio</title><link rel="stylesheet" href="admin.css"><link rel="icon" href="/auratango-logo.png"></head><body>
+<aside><a class="brand" href="index.html"><img class="brand-mark" src="/auratango-logo.png" alt="" width="48" height="48">Aura<span>Tango</span><small>CONTENT STUDIO</small></a><p class="intro">Your website.<br>Your voice.</p><nav><button data-tab="editor" class="active">Website editor</button><button data-tab="theme">Brand & colours</button><button data-tab="videos">Video links</button><button data-tab="teacher-settings">Timetable &amp; pricing</button><button data-tab="changes">Saved changes</button><a href="index.html" target="_blank">Open website ↗</a></nav><p class="aside-note">Edit each page in its original design. Changes stay in draft until you publish.</p><button id="logout" hidden>Sign out</button></aside>
+<main><header><div><small>AURATANGO / ADMIN</small><h1>Make it yours.</h1></div><span id="connection">Supabase setup required</span></header>
+<p id="status" role="status" aria-live="polite"></p>
+<section id="auth" class="card"><h2>Welcome to the studio.</h2><p>Sign in with your authorised administrator or teacher account.</p><form id="login"><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">Sign in</button></form><p id="setup">Connect your project in <code>config.js</code> and run <code>supabase/schema.sql</code>. Your public website remains available while setup is pending.</p><button id="preview">Explore editor locally</button><small>Local preview edits are temporary and cannot be published.</small></section>
+<section id="workspace" hidden><div class="toolbar"><label>Page<select id="route"></select></label><label>Language<select id="language"><option value="en">English</option><option value="pl">Polski</option><option value="ru">Русский</option><option value="uk">Українська</option></select></label><button id="save">Save draft</button><button id="publish" class="primary">Publish changes</button></div>
+<div id="editor" class="panel"><div class="editor-layout"><iframe id="preview-frame" title="Website visual editor"></iframe><div class="card inspector"><small>VISUAL EDITOR</small><h2>Edit the details.</h2><p>Click text, an image or a link in the preview. Hold Alt while clicking to use the website’s navigation.</p><form id="edit-form" hidden><label id="edit-label" for="value">Content</label><textarea id="value" rows="7"></textarea><label id="upload-label" hidden>Upload image<input id="upload" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label><button class="primary">Apply to draft</button><button type="button" id="reset-field">Restore original</button></form><p class="hint">Text changes apply to the selected page and language. Class prices edited here change display text only; the prototype’s booking and payment flows remain demonstrations.</p></div></div></div>
+<div id="theme" class="panel card" hidden><h2>The AuraTango palette.</h2><p>These colours apply throughout your website.</p><div id="colours"></div></div>
+<div id="videos" class="panel card" hidden>
+  <h2>Find my tango videos</h2>
+  <p>Add a YouTube link for each language. Leave a field blank to use the existing video. Check the clip’s audio or captions before assigning its language.</p>
+  <label>Video language<select id="video-language"><option value="en">English</option><option value="pl">Polski</option><option value="ru">Русский</option></select></label>
+  <form id="video-form">
+    <div id="video-fields"></div>
+    <button type="submit" class="primary">Apply video links to draft</button>
+  </form>
+</div>
+<section id="teacher-settings" class="panel card" hidden>
+  <h2 id="teacher-settings-title">Private lessons · Timetable &amp; pricing</h2>
+  <p id="teacher-settings-status" role="status" aria-live="polite"></p>
+  <label id="teacher-settings-picker">Teacher<select id="teacher-settings-person"><option value="rick">Rick Daniel</option><option value="anna">Anna Daniel</option></select></label>
+  <form id="teacher-settings-form" hidden>
+    <fieldset id="teacher-settings-fields">
+      <legend class="teacher-settings-heading">Availability</legend>
+      <label class="teacher-settings-check"><input id="teacher-managed" name="schedule_managed" type="checkbox"> Only accept requests for the times listed below</label>
+      <p>When this is off, visitors can suggest a time. When it is on, visitors can choose from your published times in Warsaw.</p>
+      <div class="teacher-slot-add">
+        <label>Add a date and start time · Warsaw<input id="teacher-slot-time" type="datetime-local"></label>
+        <button id="teacher-add-slot" type="button">Add time</button>
+      </div>
+      <p id="teacher-slots-empty">No upcoming times listed.</p>
+      <ul id="teacher-slots"></ul>
+      <h3>Prices in zł</h3>
+      <p>Enter the full price of each option. Leave a price blank to quote it individually.</p>
+      <div class="teacher-rates">
+        <label>Trial · 1 lesson<input name="trial_grosz" type="number" min="0" max="100000" step="0.01" inputmode="decimal"></label>
+        <label>Package · 4 lessons<input name="package4_grosz" type="number" min="0" max="100000" step="0.01" inputmode="decimal"></label>
+        <label>Package · 8 lessons<input name="package8_grosz" type="number" min="0" max="100000" step="0.01" inputmode="decimal"></label>
+      </div>
+      <button class="primary">Save teacher settings</button>
+    </fieldset>
+  </form>
+</section>
+<div id="changes" class="panel card" hidden><h2>Your draft changes.</h2><p id="count"></p><div id="change-list"></div><button id="restore">Restore published version to draft</button><button id="export">Export draft backup</button></div></section></main>
+<section id="admin-setup" class="card" style="margin:24px 24px 24px 275px;max-width:520px"><details><summary>First-time administrator setup</summary><p>Create your account with the reserved owner email. Administrator access activates after email confirmation.</p><form id="register"><label>Email<input name="email" type="email" value="tech.auratango@gmail.com" readonly required autocomplete="username"></label><label>Choose a password<input name="password" type="password" minlength="12" required autocomplete="new-password"></label><button class="primary">Create account &amp; send confirmation email</button></form></details></section>
+<script src="config.js"></script><script type="module" src="admin.js"></script></body></html>
