@@ -1,0 +1,7 @@
+{
+  "framework": null,
+  "buildCommand": "node auratango-web/scripts/build.mjs",
+  "outputDirectory": "auratango-web/dist",
+  "installCommand": "",
+  "cleanUrls": true
+}

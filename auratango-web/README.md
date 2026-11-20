@@ -34,3 +34,7 @@ User repository: https://github.com/techauratango-tech/auratango.git. A clone wa
 ## Future discount codes
 
 `dist/discounts.js` configures local package-checkout promotions. All examples are disabled. Rules support percentage or fixed PLN amounts, ISO start/expiry timestamps, class/package/party restrictions, and minimum totals. One code applies per checkout, without stacking; codes are checked again before demo confirmation. This browser-only configuration is for the preview. Production discounts, eligibility and redemption limits must be validated by the payment backend.
+
+## Vercel deployment
+
+Import the repository with Root Directory left at the repository root. The root vercel.json builds and publishes auratango-web/dist. Optional Vercel environment variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY connect the CMS; without them the public prototype still loads and the admin shows setup required. Never use a secret/service-role key.
