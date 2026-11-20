@@ -30,3 +30,7 @@ The prototype's member, studio, booking, payment, contact, attendance, community
 ## Source and hosting
 
 User repository: https://github.com/techauratango-tech/auratango.git. A clone was attempted; inspect the existing repository before merging or pushing. This working folder is separate to preserve unknown repository contents. Static hosts can serve `dist/` over HTTPS. Preserve the source and Supabase schema in Git as well as deployed assets.
+
+## Future discount codes
+
+`dist/discounts.js` configures local package-checkout promotions. All examples are disabled. Rules support percentage or fixed PLN amounts, ISO start/expiry timestamps, class/package/party restrictions, and minimum totals. One code applies per checkout, without stacking; codes are checked again before demo confirmation. This browser-only configuration is for the preview. Production discounts, eligibility and redemption limits must be validated by the payment backend.
