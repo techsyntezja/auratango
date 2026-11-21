@@ -1613,7 +1613,7 @@ function renderPackageCalendar(form,change=0){
  for(let day=1;day<=days;day++){const value=form.dataset.calendarMonth+'-'+String(day).padStart(2,'0'),weekday=new Date(value+'T12:00:00Z').getUTCDay(),enabled=value>=today&&(!slot||weekday===slot.day);cells+=`<button type="button" class="${form.elements.plannedDate.value===value?'selected':''}" ${enabled?'':'disabled'} aria-pressed="${form.elements.plannedDate.value===value}" onclick="selectPackageDate(this.form,'${value}')">${day}</button>`;}
  form.querySelector('[data-package-calendar]').innerHTML=`<div class="package-mini-calendar"><div class="package-calendar-header"><button type="button" onclick="renderPackageCalendar(this.form,-1)" aria-label="${L('Previous month','Poprzedni miesiąc','Предыдущий месяц','Попередній місяць')}">‹</button><strong>${new Intl.DateTimeFormat(locale,{month:'long',year:'numeric',timeZone:'UTC'}).format(date)}</strong><button type="button" onclick="renderPackageCalendar(this.form,1)" aria-label="${L('Next month','Następny miesiąc','Следующий месяц','Наступний місяць')}">›</button></div><div class="package-calendar-grid">${Array.from({length:7},(_,i)=>'<small>'+new Intl.DateTimeFormat(locale,{weekday:'short',timeZone:'UTC'}).format(new Date(Date.UTC(2026,0,5+i)))+'</small>').join('')}${cells}</div></div>`;
 }
-function selectPackageDate(form,value){form.elements.plannedDate.value=value;updatePackagePopup(form);renderPackageCalendar(form);}
+function selectPackageDate(form,value){form.elements.plannedDate.value=value;updatePackagePopup(form);renderPackageCalendar(form);const error=form.querySelector('[data-package-date-error]');if(error)error.textContent='';}
 
 function setupPackageSteps(form){
  if(!form)return;
@@ -1627,7 +1627,14 @@ function setupPackageSteps(form){
  const controls=document.createElement('div');controls.className='package-step-controls';controls.innerHTML=`<button type="button" class="text-link" data-form-back onclick="movePackageStep(this.form,-1)">← ${W('back')}</button><button type="button" class="btn" data-package-next onclick="movePackageStep(this.form,1)">${L('Continue','Dalej','Продолжить','Продовжити')}${I('arrow')}</button>`;form.append(controls);
  form.dataset.step='0';renderPackageStep(form);
 }
-function movePackageStep(form,change){const step=Number(form.dataset.step);if(change>0){const current=form.querySelector('[data-package-step="'+step+'"]');for(const input of current.querySelectorAll('input,select,textarea')){if(!input.reportValidity())return;}}if(change<0&&step===0){visitorFormBack(form.querySelector('[data-form-back]'));return;}form.dataset.step=String(Math.max(0,Math.min(2,step+change)));renderPackageStep(form);}
+function validatePackageStartDate(form){
+ const date=form.elements.plannedDate.value,slot=SLOTS.find(item=>item.id===form.elements['trial-slot'].value);
+ const valid=/^\d{4}-\d{2}-\d{2}$/.test(date)&&date>=warsawDateTime().slice(0,10)&&slot&&new Date(date+'T12:00:00Z').getUTCDay()===slot.day;
+ let error=form.querySelector('[data-package-date-error]');if(!error){error=document.createElement('p');error.className='error';error.dataset.packageDateError='';error.setAttribute('role','alert');form.querySelector('.package-calendar-field').append(error);}
+ error.textContent=valid?'':L('Choose your class time and first class date on the calendar.','Wybierz godzinę i datę pierwszych zajęć w kalendarzu.','Выберите время и дату первого занятия в календаре.','Оберіть час і дату першого заняття в календарі.');
+ if(!valid)error.scrollIntoView({block:'nearest'});return Boolean(valid);
+}
+function movePackageStep(form,change){const step=Number(form.dataset.step);if(change>0&&step===1&&!validatePackageStartDate(form))return;if(change>0){const current=form.querySelector('[data-package-step="'+step+'"]');for(const input of current.querySelectorAll('input,select,textarea')){if(!input.reportValidity())return;}}if(change<0&&step===0){visitorFormBack(form.querySelector('[data-form-back]'));return;}form.dataset.step=String(Math.max(0,Math.min(2,step+change)));renderPackageStep(form);}
 function renderPackageStep(form){
  const step=Number(form.dataset.step),names=[L('Your package','Twój pakiet','Ваш абонемент','Ваш абонемент'),L('Group & studio','Grupa i studio','Группа и студия','Група і студія'),L('Your details','Twoje dane','Ваши данные','Ваші дані'),L('Payment','Płatność','Оплата','Оплата')];
  form.querySelector('.package-flow-progress').innerHTML=`<p>${L('Step','Krok','Шаг','Крок')} ${step+1} / 4 · ${names[step]}</p><ol>${names.map((name,index)=>`<li class="${index===step?'current':index<step?'complete':''}" ${index===step?'aria-current="step"':''}><b>${index<step?'✓':index+1}</b><span>${name}</span></li>`).join('')}</ol>`;
@@ -1639,6 +1646,7 @@ function renderPackageStep(form){
 function saveTimetableTrial(event){
   event.preventDefault();
   const form=event.currentTarget;
+  if(!validatePackageStartDate(form)){form.dataset.step='1';renderPackageStep(form);return;}
   const data=new FormData(form);
   const offer=data.get('offer');
   const slot=data.get('trial-slot');
