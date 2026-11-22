@@ -7,22 +7,22 @@
   "redirects": [
     {
       "source": "/admin",
-      "destination": "/studio",
+      "destination": "/backstage",
       "permanent": true
     },
     {
       "source": "/admin.html",
-      "destination": "/studio",
+      "destination": "/backstage",
       "permanent": true
     },
     {
-      "source": "/backstage",
-      "destination": "/studio",
+      "source": "/studio",
+      "destination": "/backstage",
       "permanent": true
     },
     {
-      "source": "/backstage.html",
-      "destination": "/studio",
+      "source": "/studio.html",
+      "destination": "/backstage",
       "permanent": true
     }
   ],
@@ -41,7 +41,7 @@
       ]
     },
     {
-      "source": "/studio",
+      "source": "/backstage",
       "headers": [
         {
           "key": "Cache-Control",

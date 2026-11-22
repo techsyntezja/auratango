@@ -1,6 +1,6 @@
 # AuraTango website and content studio
 
-Run `npm run dev` from this folder. Website: http://127.0.0.1:4173. Dashboard: http://127.0.0.1:4173/studio. No dependency installation is required. `npm run check` validates JavaScript syntax.
+Run `npm run dev` from this folder. Website: http://127.0.0.1:4173. Dashboard: http://127.0.0.1:4173/backstage. No dependency installation is required. `npm run check` validates JavaScript syntax.
 
 ## Supabase activation
 
@@ -8,7 +8,7 @@ Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in `.env.local`. The local pre
 
 The CMS schema and media bucket have been applied to the connected project. Do not rerun the setup SQL on this project.
 
-1. Open `/studio` and expand **First-time administrator setup**.
+1. Open `/backstage` and expand **First-time administrator setup**.
 2. Use the reserved email `tech.auratango@gmail.com` and choose a password of at least 12 characters.
 3. Submit the form, confirm your email using the Supabase email, then return to the dashboard and sign in. The confirmation may redirect to the default localhost address until production Auth redirect URLs are configured; return to the dashboard after confirmation.
 4. The protected database trigger grants administrator access only after that reserved email is confirmed. Other registrations do not receive CMS access.
@@ -25,7 +25,7 @@ Choose a page and language. Click text, an image or a link to edit it. Hold Alt 
 
 This is the original supplied prototype plus a CMS integration, pending database activation. Text, image URLs/uploads, links, and colours can be edited; page structure and business rules still require code. Edits are keyed to page, language and DOM position; revisit edits after structural code changes. Editing a displayed price does not update a booking tariff.
 
-The prototype's member, studio, booking, payment, contact, attendance, community, inventory and CRM operations remain demonstrations backed by browser state. No money is collected and no enquiry is delivered by these original flows. Prototype labels and noindex are retained. A production launch needs structured business tables, server-authoritative availability and pricing, real member accounts and permissions, payment webhooks, enquiry delivery, and indexable routes. The legacy hash-route previews are distinct from the authenticated `/studio` CMS and `/dashboard` CRM.
+The prototype's member, studio, booking, payment, contact, attendance, community, inventory and CRM operations remain demonstrations backed by browser state. No money is collected and no enquiry is delivered by these original flows. Prototype labels and noindex are retained. A production launch needs structured business tables, server-authoritative availability and pricing, real member accounts and permissions, payment webhooks, enquiry delivery, and indexable routes. The legacy hash-route previews are distinct from the authenticated `/backstage` CMS and `/dashboard` CRM.
 
 ## Source and hosting
 
@@ -41,7 +41,7 @@ Import the repository with Root Directory left at the repository root. The root 
 
 ## Staff CRM
 
-- CRM: /dashboard (Backstage was occupied). CMS moved to /studio. /admin and /backstage redirect to /studio.
+- CRM: /dashboard (Backstage was occupied). CMS is at /backstage. /admin and /studio redirect to /backstage.
 - Existing Supabase users and cms_admins membership are reused. Teachers retain their CMS access but do not receive CRM access. The CRM server verifies the user and administrator membership on every request; database RPCs independently recheck membership.
 - The Vercel function api/crm.mjs holds access and refresh tokens in HttpOnly, SameSite=Strict cookies and rejects cross-origin mutations. No service-role key is used. Dashboard HTML is a sign-in shell; records are returned only after server authorization.
 - Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in Vercel (already configured for this project). Local development uses .env.local and node scripts/serve.mjs.
