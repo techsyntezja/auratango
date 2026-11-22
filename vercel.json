@@ -15,11 +15,5 @@
       "destination": "/backstage",
       "permanent": true
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/backstage",
-      "destination": "/admin.html"
-    }
   ]
 }
