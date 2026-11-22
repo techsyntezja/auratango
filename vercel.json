@@ -7,13 +7,62 @@
   "redirects": [
     {
       "source": "/admin",
-      "destination": "/backstage",
+      "destination": "/studio",
       "permanent": true
     },
     {
       "source": "/admin.html",
-      "destination": "/backstage",
+      "destination": "/studio",
+      "permanent": true
+    },
+    {
+      "source": "/backstage",
+      "destination": "/studio",
+      "permanent": true
+    },
+    {
+      "source": "/backstage.html",
+      "destination": "/studio",
       "permanent": true
     }
-  ]
+  ],
+  "headers": [
+    {
+      "source": "/dashboard",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/studio",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/dashboard",
+      "destination": "/api/crm?action=page"
+    }
+  ],
+  "functions": {
+    "api/crm.mjs": {
+      "includeFiles": "auratango-web/dist/dashboard.html"
+    }
+  }
 }

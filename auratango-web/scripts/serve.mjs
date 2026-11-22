@@ -1,3 +1,4 @@
+import crmHandler from '../../api/crm.mjs';
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
@@ -7,14 +8,17 @@ const {SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY} = parseEnv(await readFile(new URL
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY?.startsWith('sb_publishable_')) {
  throw new Error('.env.local must contain SUPABASE_URL and a Supabase publishable key.');
 }
+process.env.SUPABASE_URL=SUPABASE_URL;process.env.SUPABASE_PUBLISHABLE_KEY=SUPABASE_PUBLISHABLE_KEY;
 const browserConfig = JSON.stringify({supabaseUrl: SUPABASE_URL, supabaseKey: SUPABASE_PUBLISHABLE_KEY});
 const root=path.resolve('dist');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.jpg':'image/jpeg'};
 http.createServer(async(req,res)=>{
+ if(new URL(req.url,'http://localhost').pathname==='/api/crm'||new URL(req.url,'http://localhost').pathname==='/dashboard'){if(req.url==='/dashboard')req.url='/api/crm?action=page';return crmHandler(req,res);}
+
  if (new URL(req.url, 'http://localhost').pathname === '/config.js') {
   res.writeHead(200, {'Content-Type': types['.js'], 'Cache-Control': 'no-store'});
   res.end('window.AURA_CONFIG = ' + browserConfig + ';');
   return;
  }
- try{const url=new URL(req.url,'http://localhost');if(url.pathname==='/admin/' || url.pathname==='/admin.html' || url.pathname==='/admin' || url.pathname==='/backstage/'){res.writeHead(302,{Location:'/backstage'+url.search});res.end();return;}const file=path.resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname==='/backstage'?'/backstage.html':url.pathname==='/simple'?'/simple.html':url.pathname));if(!file.startsWith(root+path.sep)){res.writeHead(403);res.end();return;}const body=await readFile(file);res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(body);}catch{res.writeHead(404);res.end('Not found');}
+ try{const url=new URL(req.url,'http://localhost');if(url.pathname==='/admin/' || url.pathname==='/admin.html' || url.pathname==='/admin' || url.pathname==='/backstage/' || url.pathname==='/backstage' || url.pathname==='/backstage.html'){res.writeHead(302,{Location:'/studio'+url.search});res.end();return;}const file=path.resolve(root,'.'+decodeURIComponent(url.pathname==='/'?'/index.html':url.pathname==='/studio'?'/studio.html':url.pathname==='/dashboard'?'/dashboard.html':url.pathname==='/simple'?'/simple.html':url.pathname));if(!file.startsWith(root+path.sep)){res.writeHead(403);res.end();return;}const body=await readFile(file);res.writeHead(200,{'Content-Type':types[path.extname(file)]||'application/octet-stream','Cache-Control':'no-store'});res.end(body);}catch{res.writeHead(404);res.end('Not found');}
 }).listen(4173,'127.0.0.1',()=>console.log('Local: http://127.0.0.1:4173'));

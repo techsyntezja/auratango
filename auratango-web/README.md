@@ -1,6 +1,6 @@
 # AuraTango website and content studio
 
-Run `npm run dev` from this folder. Website: http://127.0.0.1:4173. Dashboard: http://127.0.0.1:4173/backstage. No dependency installation is required. `npm run check` validates JavaScript syntax.
+Run `npm run dev` from this folder. Website: http://127.0.0.1:4173. Dashboard: http://127.0.0.1:4173/studio. No dependency installation is required. `npm run check` validates JavaScript syntax.
 
 ## Supabase activation
 
@@ -8,7 +8,7 @@ Set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in `.env.local`. The local pre
 
 The CMS schema and media bucket have been applied to the connected project. Do not rerun the setup SQL on this project.
 
-1. Open `/backstage` and expand **First-time administrator setup**.
+1. Open `/studio` and expand **First-time administrator setup**.
 2. Use the reserved email `tech.auratango@gmail.com` and choose a password of at least 12 characters.
 3. Submit the form, confirm your email using the Supabase email, then return to the dashboard and sign in. The confirmation may redirect to the default localhost address until production Auth redirect URLs are configured; return to the dashboard after confirmation.
 4. The protected database trigger grants administrator access only after that reserved email is confirmed. Other registrations do not receive CMS access.
@@ -25,11 +25,11 @@ Choose a page and language. Click text, an image or a link to edit it. Hold Alt 
 
 This is the original supplied prototype plus a CMS integration, pending database activation. Text, image URLs/uploads, links, and colours can be edited; page structure and business rules still require code. Edits are keyed to page, language and DOM position; revisit edits after structural code changes. Editing a displayed price does not update a booking tariff.
 
-The prototype's member, studio, booking, payment, contact, attendance, community, inventory and CRM operations remain demonstrations backed by browser state. No money is collected and no enquiry is delivered by these original flows. Prototype labels and noindex are retained. A production launch needs structured business tables, server-authoritative availability and pricing, real member accounts and permissions, payment webhooks, enquiry delivery, and indexable routes. The existing `/studio` preview is distinct from the secure `/backstage` CMS.
+The prototype's member, studio, booking, payment, contact, attendance, community, inventory and CRM operations remain demonstrations backed by browser state. No money is collected and no enquiry is delivered by these original flows. Prototype labels and noindex are retained. A production launch needs structured business tables, server-authoritative availability and pricing, real member accounts and permissions, payment webhooks, enquiry delivery, and indexable routes. The legacy hash-route previews are distinct from the authenticated `/studio` CMS and `/dashboard` CRM.
 
 ## Source and hosting
 
-User repository: https://github.com/techauratango-tech/auratango.git. A clone was attempted; inspect the existing repository before merging or pushing. This working folder is separate to preserve unknown repository contents. Static hosts can serve `dist/` over HTTPS. Preserve the source and Supabase schema in Git as well as deployed assets.
+Repository: https://github.com/techsyntezja/auratango.git. Static hosts can serve `dist/` over HTTPS. Preserve the source and Supabase schema in Git as well as deployed assets.
 
 ## Future discount codes
 
@@ -38,3 +38,17 @@ User repository: https://github.com/techauratango-tech/auratango.git. A clone wa
 ## Vercel deployment
 
 Import the repository with Root Directory left at the repository root. The root vercel.json builds and publishes auratango-web/dist. Optional Vercel environment variables SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY connect the CMS; without them the public prototype still loads and the admin shows setup required. Never use a secret/service-role key.
+
+## Staff CRM
+
+- CRM: /dashboard (Backstage was occupied). CMS moved to /studio. /admin and /backstage redirect to /studio.
+- Existing Supabase users and cms_admins membership are reused. Teachers retain their CMS access but do not receive CRM access. The CRM server verifies the user and administrator membership on every request; database RPCs independently recheck membership.
+- The Vercel function api/crm.mjs holds access and refresh tokens in HttpOnly, SameSite=Strict cookies and rejects cross-origin mutations. No service-role key is used. Dashboard HTML is a sign-in shell; records are returned only after server authorization.
+- Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in Vercel (already configured for this project). Local development uses .env.local and node scripts/serve.mjs.
+- Database: supabase/crm.sql is the complete fresh-install schema. It has been applied to the connected project. crm-attendance.sql and crm-contact-validation.sql record follow-up upgrades for the existing installation; do not reapply the original create-table script to a populated installation.
+- school_crm is a private schema with RLS and no browser table privileges. crm_staff is administrator-only; crm_trial_inquiry is an intentionally public insert-only RPC with input validation, a honeypot, per-contact daily limits, and submission idempotency. Public submission returns only a success flag, never records. Add provider-level bot protection if anonymous spam becomes an issue.
+- Submitting the public trial details now creates a real New lead. Preferred dates remain requests: staff book an actual class in CRM. Customer payment screens remain demonstrations; membership purchases are recorded manually and do not charge anyone. No automated email is sent.
+- Schedule uses individual dated classes in Warsaw time. No fabricated production classes are seeded. Capacity counts people, not couples; add one roster record per attendee. Class editing, booking, rescheduling, cancellation and attendance are transactional.
+- Students are deduplicated by normalized email or phone on conversion. History stays linked through the lead and student. Attendance debits an active membership once; reversing attendance restores that credit. Trial attendance recorded before conversion does not consume a newly purchased membership.
+- Verification: node scripts/check.mjs; node scripts/crm-api-test.mjs; node scripts/crm-browser-test.mjs (Windows Edge, isolated mock staff API). Optional --real-intake submits a synthetic inquiry to the configured database; remove that exact test submission after verification. supabase/crm-workflow-test.sql runs database workflow and permission assertions in a rollback transaction.
+- Security advisor warnings for definer RPC entry points are intentional: the public endpoint only accepts inquiries; the staff endpoint explicitly checks auth.uid() against cms_admins. Private tables intentionally have no direct-access policies. Existing leaked-password protection is disabled in Supabase Auth; the owner can enable it in Auth settings.
