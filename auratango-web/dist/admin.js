@@ -12,7 +12,7 @@ function update(){dirty=true;send();status(authenticated?'Unsaved draft changes.
 function changes(){let total=0;const list=$('#change-list');list.replaceChildren();for(const [context,edits]of Object.entries(draft.edits||{}))for(const edit of Object.values(edits)){total++;const row=document.createElement('div');row.className='change';row.textContent=context+' · '+edit.kind+' · '+edit.value;list.append(row);}$('#count').textContent=total+' content changes plus '+Object.keys(draft.theme||{}).length+' brand colours and '+Object.values(draft.finderVideos||{}).reduce((count,links)=>count+Object.keys(links).length,0)+' video links.';}
 function openWorkspace(){
   $('#auth').hidden=true;$('#admin-setup').hidden=true;$('#workspace').hidden=false;$('#logout').hidden=!authenticated;
-  $('#connection').textContent=authenticated?'Connected to Supabase':'Local preview';
+
   $('#save').disabled=$('#publish').disabled=!authenticated;
   if(workspaceAccess.admin){preview();renderVideoFields();changes();return;}
   $('.toolbar').hidden=true;
@@ -81,4 +81,4 @@ for(const [key,[title,value]]of Object.entries(colours)){const label=document.cr
 $('#restore').onclick=()=>{draft=structuredClone(published);dirty=true;preview();renderVideoFields();changes();status('Published content restored to your draft. Save to keep it.');};
 $('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='auratango-content.json';a.click();URL.revokeObjectURL(url);};
 window.addEventListener('beforeunload',e=>{if(dirty||hasUnsavedTeacherSettings()){e.preventDefault();e.returnValue='';}});
-if(configured){$('#connection').textContent='Supabase configured';$('#setup').hidden=true;}
+if(configured){$('#setup').hidden=true;}
