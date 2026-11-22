@@ -3,5 +3,23 @@
   "buildCommand": "node auratango-web/scripts/build.mjs",
   "outputDirectory": "auratango-web/dist",
   "installCommand": "",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/admin",
+      "destination": "/backstage",
+      "permanent": true
+    },
+    {
+      "source": "/admin.html",
+      "destination": "/backstage",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/backstage",
+      "destination": "/admin.html"
+    }
+  ]
 }
