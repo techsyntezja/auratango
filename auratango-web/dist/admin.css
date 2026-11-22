@@ -14,3 +14,5 @@
 #teacher-slots{list-style:none;max-width:540px;padding:0}
 #teacher-slots li{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #dfc6bf;padding:8px 0}
 .teacher-rates{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px}
+
+[hidden]{display:none!important}

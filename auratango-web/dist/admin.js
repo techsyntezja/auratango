@@ -1,8 +1,8 @@
-import {configured,login,logout,load,save,upload,registerAdmin} from './cms-api.js';
+import {configured,login,logout,load,save,upload} from './cms-api.js';
 import {finderVideoUrl,youtubeVideoId} from './finder-videos.js';
 import {openTeacherPanel,hasUnsavedTeacherSettings} from './teacher-panel.js';
 const $=s=>document.querySelector(s), frame=$('#preview-frame');
-let draft={edits:{},theme:{}},published={},selected=null,authenticated=false,dirty=false,workspaceAccess={admin:true,teacher:null,preview:true};
+let draft={edits:{},theme:{}},published={},selected=null,authenticated=false,dirty=false,workspaceAccess={admin:false,teacher:null,preview:false};
 const pages={'/':'Home','/classes':'Classes','/class/partnered':'Partnered tango','/class/ladies':'Tango Ladies','/timetable':'Timetable','/workshops':'Workshops','/milonga':'Milonga','/auratouch':'AuraTouch','/community':'Community','/shop':'Atelier','/story':'About','/contact':'Contact','/pricing':'Pricing','/journal':'Journal','/guide':'Beginner guide','/gift':'Gift cards'};
 for(const [path,title] of Object.entries(pages))$('#route').add(new Option(title,path));
 function status(text){$('#status').textContent=text;}
@@ -11,7 +11,9 @@ function preview(){frame.src='index.html?cms=1#'+$('#route').value;}
 function update(){dirty=true;send();status(authenticated?'Unsaved draft changes.':'Local preview — changes are temporary.');changes();}
 function changes(){let total=0;const list=$('#change-list');list.replaceChildren();for(const [context,edits]of Object.entries(draft.edits||{}))for(const edit of Object.values(edits)){total++;const row=document.createElement('div');row.className='change';row.textContent=context+' · '+edit.kind+' · '+edit.value;list.append(row);}$('#count').textContent=total+' content changes plus '+Object.keys(draft.theme||{}).length+' brand colours and '+Object.values(draft.finderVideos||{}).reduce((count,links)=>count+Object.keys(links).length,0)+' video links.';}
 function openWorkspace(){
-  $('#auth').hidden=true;$('#admin-setup').hidden=true;$('#workspace').hidden=false;$('#logout').hidden=!authenticated;
+  if(!authenticated||(!workspaceAccess.admin&&!workspaceAccess.teacher))return;
+  $('#backstage-nav').hidden=false;
+  $('#auth').hidden=true;$('#workspace').hidden=false;$('#logout').hidden=!authenticated;
 
   $('#save').disabled=$('#publish').disabled=!authenticated;
   if(workspaceAccess.admin){preview();renderVideoFields();changes();return;}
@@ -20,8 +22,8 @@ function openWorkspace(){
   $('[data-tab=teacher-settings]').click();
 }
 $('#login').onsubmit=async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const f=new FormData(e.target);const access=await login(f.get('email'),f.get('password'));if(access.admin){const row=await load(false);draft=row.draft||{edits:{},theme:{}};published=row.published||{};}workspaceAccess={...access,preview:false};authenticated=true;e.target.reset();openWorkspace();status(workspaceAccess.admin?'Signed in. Your draft is ready.':'Signed in to teacher settings.');}catch(error){status(error.message);}finally{button.disabled=false;}};
-$('#preview').onclick=openWorkspace;
-$('#register').onsubmit=async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const form=new FormData(e.target);await registerAdmin(form.get('email'),form.get('password'));e.target.reset();status('Check tech.auratango@gmail.com for the confirmation email. Confirm your email, return to this dashboard, then sign in. If the confirmation opens an unavailable localhost page, return here and sign in after confirming.');}catch(error){status(error.message);}finally{button.disabled=false;}};
+
+
 $('#logout').onclick=async()=>{try{await logout();location.reload();}catch(error){status(error.message)}};
 $('#route').onchange=()=>{selected=null;$('#edit-form').hidden=true;preview();};
 $('#language').onchange=()=>frame.contentWindow?.postMessage({type:'aura-language',language:$('#language').value},location.origin);
