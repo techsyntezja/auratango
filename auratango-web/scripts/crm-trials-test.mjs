@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {trialClassType,trialsForDay,trialLeadCount} from '../dist/crm-trials.js';
+const classes=[['a','Ladies’ Solo'],['b','Couple group'],['c','Single partner group'],['d','Private class']].map(([id,class_type])=>({id,class_type,starts_at:'2026-11-22',cancelled:false}));
+classes.push({id:'cancelled',class_type:'Ladies’ Solo',starts_at:'2026-11-22',cancelled:true},{id:'tomorrow',class_type:'Ladies’ Solo',starts_at:'2026-11-23'});
+const bookings=[['a','l1'],['a','l2'],['b','l3'],['c','l4'],['c','l4'],['d','l5'],['cancelled','l6'],['tomorrow','l7']].map(([class_id,lead_id])=>({class_id,lead_id,status:'Booked'}));
+bookings.push({class_id:'a',lead_id:'l8',status:'Cancelled'},{class_id:'a',student_id:'s1',status:'Booked'});
+const data={classes,bookings};const get=type=>trialsForDay(data,'2026-11-22',x=>x,type);
+assert.equal(trialLeadCount(get('')),5);assert.equal(trialLeadCount(get('ladies')),2);assert.equal(trialLeadCount(get('couples')),1);assert.equal(trialLeadCount(get('solo')),1);assert.equal(trialLeadCount(get('other')),1);
+assert.equal(trialClassType('Solo partner group'),'solo');assert.deepEqual(get('couples').map(b=>b.lead_id),['l3']);
+console.log('PASS: trials split by class type; cancelled, other-day and student-only bookings excluded; duplicate leads counted once.');
