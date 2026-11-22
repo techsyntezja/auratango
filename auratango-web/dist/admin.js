@@ -33,7 +33,7 @@ $('#reset-field').onclick=()=>{if(selected&&draft.edits?.[selected.context])dele
 $('#upload').onchange=async e=>{if(!authenticated)return status('Sign in to upload media.');if(!e.target.files[0])return;try{$('#value').value=await upload(e.target.files[0]);status('Image uploaded. Apply it to your draft.');}catch(error){status(error.message);}};
 async function persist(publish){const buttons=[$('#save'),$('#publish')];buttons.forEach(b=>b.disabled=true);try{await save(draft,publish);dirty=false;if(publish)published=structuredClone(draft);status(publish?'Published. Your changes are now available on the website.':'Draft saved. The public website has not changed.');}catch(error){status(error.message);}finally{buttons.forEach(b=>b.disabled=false);}}
 $('#save').onclick=()=>persist(false);$('#publish').onclick=()=>persist(true);
-for(const button of document.querySelectorAll('[data-tab]'))button.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===button));document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==button.dataset.tab);if(button.dataset.tab==='teacher-settings')openTeacherPanel(workspaceAccess);};
+for(const button of document.querySelectorAll('[data-tab]'))button.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===button));document.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!==button.dataset.tab);if(button.dataset.tab==='teacher-settings')openClassSettings();};
 const videoSlots = {
   partnered:'Partner dancing', ladies:'Ladies’ Solo', experienced:'I already dance',
   return:'I am coming back', auratouch:'AuraTouch', private:'Private classes · Anna',
@@ -84,3 +84,17 @@ $('#restore').onclick=()=>{draft=structuredClone(published);dirty=true;preview()
 $('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='auratango-content.json';a.click();URL.revokeObjectURL(url);};
 window.addEventListener('beforeunload',e=>{if(dirty||hasUnsavedTeacherSettings()){e.preventDefault();e.returnValue='';}});
 if(configured){$('#setup').hidden=true;}
+
+function openClassSettings(){
+ const types=workspaceAccess.admin?[['single','Single partner groups','One person joining a partner group'],['couple','Couple groups','Two people joining together'],['ladies','Ladies’ Solo','Solo movement with Anna'],['private','Private lessons','Rick and Anna · individual settings']]:[['private','Private lessons','Your timetable and prices']];
+ const choices=$('#class-type-choices');choices.replaceChildren(...types.map(([id,title,description])=>{const button=document.createElement('button');button.type='button';button.dataset.classType=id;const heading=document.createElement('strong');heading.textContent=title;const text=document.createElement('span');text.textContent=description;button.append(heading,text);button.onclick=()=>showClassSettings(id);return button;}));
+ showClassSettings(workspaceAccess.admin?'single':'private');
+}
+function showClassSettings(type){
+ const isPrivate=type==='private';$('#private-settings-content').hidden=!isPrivate;$('#group-class-overview').hidden=isPrivate;
+ document.querySelectorAll('[data-class-type]').forEach(button=>{const selected=button.dataset.classType===type;button.classList.toggle('active',selected);button.setAttribute('aria-pressed',selected);});
+ if(isPrivate){openTeacherPanel(workspaceAccess);return;}
+ if(!workspaceAccess.admin)return;
+ const couple=type==='couple',ladies=type==='ladies',title=ladies?'Ladies’ Solo':couple?'Couple groups':'Single partner groups',rate=couple?440:260,trial=couple?58:29;
+ const overview=$('#group-class-overview');overview.innerHTML='<h3>'+title+'</h3><p>Current website programme · Warsaw time</p><div class="class-overview-grid"><section><h3>Packages & prices</h3><table><thead><tr><th>Package</th><th>Classes</th><th>Price</th></tr></thead><tbody>'+[['First Embrace',1],['Finding the Flow',3],['Your Tango Voice',6]].map(([name,months])=>'<tr><td>'+name+'<small>'+months+' month'+(months>1?'s':'')+'</small></td><td>'+months*4+'</td><td>'+rate*months+' zł</td></tr>').join('')+'</tbody></table><p>Trial class: <strong>'+trial+' zł</strong> · '+(couple?'per couple':'per person')+'</p></section><section><h3>Weekly timetable</h3><ul>'+(ladies?['Saturday · 10:00–12:00','Sunday · 10:00–12:00']:['Saturday · 15:00–16:15','Saturday · 16:15–17:30','Saturday · 17:30–18:45']).map(time=>'<li>'+time+'</li>').join('')+'</ul><p>Studios: Gocław · Abrahama 12 and Solec · Solec 38. A group’s venue is confirmed separately.</p></section></div><p class="hint">Group prices and recurring times are shown as an overview of the current website. Private lesson settings can be edited and saved in the Private lessons card.</p><a href="/#/classes" target="_blank" rel="noopener">View public classes ↗</a>';
+}
