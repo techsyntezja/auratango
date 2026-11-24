@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createHandler} from '../../api/crm.mjs';
-const calls=[];let admin=true;
-const fetcher=async(url,options={})=>{calls.push({url,options});if(url.includes('grant_type=password'))return Response.json({access_token:'test-token',refresh_token:'test-refresh',expires_in:3600});if(url.endsWith('/auth/v1/user'))return Response.json({id:'test-admin'});if(url.includes('/cms_admins'))return Response.json(admin?[{user_id:'test-admin'}]:[]);if(url.endsWith('/rpc/crm_staff'))return Response.json({leads:[]});return Response.json({});};
+const calls=[];let admin=true,teacher=null;
+const fetcher=async(url,options={})=>{calls.push({url,options});if(url.includes('grant_type=password'))return Response.json({access_token:'test-token',refresh_token:'test-refresh',expires_in:3600});if(url.endsWith('/auth/v1/user'))return Response.json({id:'test-admin'});if(url.includes('/private_teacher_access'))return Response.json(teacher?[{teacher}]:[]);if(url.includes('/cms_admins'))return Response.json(admin?[{user_id:'test-admin'}]:[]);if(url.includes('/object/upload/sign/'))return Response.json({url:'/object/upload/sign/site-media/test.png?token=limited-upload'});if(url.includes('/site_drafts'))return Response.json([{draft:{}}]);if(url.includes('/private_lesson_settings'))return Response.json([{teacher:'anna'}]);if(url.endsWith('/rpc/crm_staff'))return Response.json({leads:[]});return Response.json({});};
 const handler=createHandler({fetcher,env:{SUPABASE_URL:'https://test.supabase.co',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test'},readPage:async()=>'<html>Sign in</html>'});
 async function run(action,{cookie,origin='https://school.example',method='POST',payload={}}={}){const req={method,url:'/api/crm',headers:{host:'school.example',origin,...(cookie?{cookie}:{})},body:{action,payload}};const headers={};let text;const res={statusCode:200,setHeader:(name,value)=>headers[name]=value,end:value=>text=value};await handler(req,res);return {status:res.statusCode,headers,body:JSON.parse(text)};}
 assert.equal((await run('load')).status,401);
@@ -10,5 +10,17 @@ assert.equal((await run('load',{origin:null})).status,403);
 admin=false;assert.equal((await run('load',{cookie:'aura_crm_session=test-token'})).status,403);
 admin=true;const signed=await run('login',{payload:{email:'admin@example.invalid',password:'not-real'}});assert.equal(signed.status,200);assert.equal(signed.body.admin,true);assert(!JSON.stringify(signed.body).includes('test-token'));assert(signed.headers['Set-Cookie'].every(c=>c.includes('HttpOnly')&&c.includes('SameSite=Strict')&&c.includes('Secure')));
 const before=calls.length;const load=await run('load',{cookie:'aura_crm_session=test-token'});assert.equal(load.status,200);assert(calls.slice(before).some(c=>c.url.endsWith('/auth/v1/user')));assert(calls.slice(before).some(c=>c.url.includes('/cms_admins')));assert(calls.some(c=>c.url.endsWith('/rpc/crm_staff')&&c.options.headers.Authorization==='Bearer test-token'));
+const shared={cookie:'aura_crm_session=test-token'};
+assert.equal((await run('session',shared)).body.admin,true);
+assert.equal((await run('studio_request',{...shared,payload:{path:'/rest/v1/site_drafts?id=eq.main',method:'GET'}})).status,200);
+assert.equal((await run('studio_request',{...shared,payload:{path:'/auth/v1/user',method:'GET'}})).status,400);
+assert.equal((await run('studio_upload',{...shared,payload:{extension:'png'}})).status,200);
+admin=false;teacher='anna';assert.equal((await run('session',shared)).body.teacher,'anna');
+assert.equal((await run('load',shared)).status,403);
+assert.equal((await run('studio_request',{...shared,payload:{path:'/rest/v1/site_drafts',method:'PATCH',body:{draft:{}}}})).status,403);
+assert.equal((await run('studio_upload',{...shared,payload:{extension:'png'}})).status,403);
+assert.equal((await run('studio_request',{...shared,payload:{path:'/rest/v1/private_lesson_settings?teacher=eq.anna',method:'PATCH',body:{revision:1}}})).status,200);
+assert(calls.some(c=>c.url.includes('/private_lesson_settings')&&c.options.headers.Prefer==='return=representation'));
+admin=true;teacher=null;
 const signedOut=await run('logout',{cookie:'aura_crm_session=test-token'});assert(signedOut.headers['Set-Cookie'].every(c=>c.includes('Max-Age=0')));
-console.log('PASS: server rejects anonymous, non-admin and cross-origin requests; rechecks role for reads; HttpOnly secure session; sign-out clears cookies.');
+console.log('PASS: server rejects anonymous, non-admin and cross-origin requests; rechecks role for reads; HttpOnly secure session; sign-out clears cookies; shared editor session and teacher restrictions preserved.');

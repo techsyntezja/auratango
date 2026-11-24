@@ -1,4 +1,4 @@
-import {configured,login,logout,load,save,upload} from './cms-api.js';
+import {configured,staffSession,logout,load,save,upload} from './cms-api.js';
 import {finderVideoUrl,youtubeVideoId} from './finder-videos.js';
 import {openTeacherPanel,hasUnsavedTeacherSettings} from './teacher-panel.js';
 const $=s=>document.querySelector(s), frame=$('#preview-frame');
@@ -21,7 +21,7 @@ function openWorkspace(){
   document.querySelectorAll('[data-tab]:not([data-tab=teacher-settings])').forEach(button=>button.hidden=true);
   $('[data-tab=teacher-settings]').click();
 }
-$('#login').onsubmit=async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const f=new FormData(e.target);const access=await login(f.get('email'),f.get('password'));if(access.admin){const row=await load(false);draft=row.draft||{edits:{},theme:{}};published=row.published||{};}workspaceAccess={...access,preview:false};authenticated=true;e.target.reset();openWorkspace();status(workspaceAccess.admin?'Signed in. Your draft is ready.':'Signed in to teacher settings.');}catch(error){status(error.message);}finally{button.disabled=false;}};
+
 
 
 $('#logout').onclick=async()=>{try{await logout();location.reload();}catch(error){status(error.message)}};
@@ -98,3 +98,6 @@ function showClassSettings(type){
  const couple=type==='couple',ladies=type==='ladies',title=ladies?'Ladies’ Solo':couple?'Couple groups':'Single partner groups',rate=couple?440:260,trial=couple?58:29;
  const overview=$('#group-class-overview');overview.innerHTML='<h3>'+title+'</h3><p>Current website programme · Warsaw time</p><div class="class-overview-grid"><section><h3>Packages & prices</h3><table><thead><tr><th>Package</th><th>Classes</th><th>Price</th></tr></thead><tbody>'+[['First Embrace',1],['Finding the Flow',3],['Your Tango Voice',6]].map(([name,months])=>'<tr><td>'+name+'<small>'+months+' month'+(months>1?'s':'')+'</small></td><td>'+months*4+'</td><td>'+rate*months+' zł</td></tr>').join('')+'</tbody></table><p>Trial class: <strong>'+trial+' zł</strong> · '+(couple?'per couple':'per person')+'</p></section><section><h3>Weekly timetable</h3><ul>'+(ladies?['Saturday · 10:00–12:00','Sunday · 10:00–12:00']:['Saturday · 15:00–16:15','Saturday · 16:15–17:30','Saturday · 17:30–18:45']).map(time=>'<li>'+time+'</li>').join('')+'</ul><p>Studios: Gocław · Abrahama 12 and Solec · Solec 38. A group’s venue is confirmed separately.</p></section></div><p class="hint">Group prices and recurring times are shown as an overview of the current website. Private lesson settings can be edited and saved in the Private lessons card.</p><a href="/#/classes" target="_blank" rel="noopener">View public classes ↗</a>';
 }
+
+async function resumeStaffEditor(){try{const access=await staffSession();if(access.admin){const row=await load(false);draft=row.draft||{edits:{},theme:{}};published=row.published||{};}workspaceAccess={...access,preview:false};authenticated=true;openWorkspace();status(workspaceAccess.admin?'Signed in. Your draft is ready.':'Signed in to teacher settings.');}catch(error){if(!authenticated&&(error.status===401||error.status===403))location.replace('/dashboard?next=backstage');else status(error.message);}}
+resumeStaffEditor();
