@@ -68,3 +68,9 @@ Staff: open `/dashboard#discounts`. Create a percentage or fixed zł code, choos
 Setup on another database: apply `supabase/crm-discounts.sql` after the CRM schema. It adds the private RLS-protected `school_crm.discounts` table, the administrator-checked `crm_discounts` RPC, and a limited public `validate_class_discount` RPC. The public RPC returns a quote only for a supplied code and does not expose the list or internal labels. The public function's intentional SECURITY DEFINER advisory and private table's no-policy advisory reflect this narrow API design; direct table privileges are revoked. Real payment capture, usage limits and redemption accounting are not implemented.
 
 Validation: `node scripts/crm-discounts-test.mjs`, `node scripts/crm-api-test.mjs`; run `supabase/crm-discounts-test.sql` for rollback-only database checks. No test discount is retained in production.
+
+### Timed package checkout preview
+
+Package checkout starts a browser-persisted ten-minute deadline. Refreshing or changing payment methods does not reset it. Expiry blocks checkout and code application; the visitor can explicitly start a new preview window. Successful preview checkout shows a notification and opens `/member/purchases` after three seconds, with package, contact, studio, validity dates, remaining sessions, method, discount and total. Records remain local to this browser.
+
+This is not a payment gateway or authenticated customer account. Real charging, server-enforced payment expiration, webhook-confirmed success, emailed notifications and cross-device private purchase history require a selected payment provider plus customer authentication and server-side order storage. Staff CRM sign-in is separate and is not reused as customer authorization. Test with `node scripts/payment-session-test.mjs`.
