@@ -1,0 +1,37 @@
+begin;
+create temporary table discount_test_results(test text,passed boolean);
+do $$
+declare admin_id uuid; item uuid; code text:='TEST-'||upper(substr(replace(gen_random_uuid()::text,'-',''),1,12)); params jsonb; quote jsonb; denied boolean;
+begin
+ select user_id into admin_id from public.cms_admins limit 1;
+ perform set_config('request.jwt.claim.sub','',true);
+ begin perform public.crm_discounts('discount_list');raise exception 'Anonymous list allowed';exception when insufficient_privilege then null;end;
+ perform set_config('request.jwt.claim.sub',gen_random_uuid()::text,true);
+ begin perform public.crm_discounts('discount_save','{}');raise exception 'Non-admin save allowed';exception when insufficient_privilege then null;end;
+ insert into discount_test_results values('Anonymous and non-admin access rejected',true);
+ perform set_config('request.jwt.claim.sub',admin_id::text,true);
+ params:=jsonb_build_object('code',code,'label','Rollback fixture','kind','percent','value',10,'class_type','couples','months',3,'starts_on',(now() at time zone 'Europe/Warsaw')::date,'ends_on',(now() at time zone 'Europe/Warsaw')::date,'enabled',true);
+ item:=(public.crm_discounts('discount_save',params)->>'id')::uuid;
+ quote:=public.validate_class_discount(lower(code),'partnered','couple',3);
+ if quote->>'total'<>'1188.00' and (quote->>'total')::numeric<>1188 then raise exception 'Wrong percent quote: %',quote;end if;
+ insert into discount_test_results values('Code creation and 10 percent quote; inclusive expiry and case normalization',true);
+ if (public.validate_class_discount(code,'partnered','solo',3)->>'valid')::boolean or (public.validate_class_discount(code,'partnered','couple',1)->>'valid')::boolean then raise exception 'Eligibility ignored';end if;
+ insert into discount_test_results values('Class and package restrictions enforced',true);
+ perform public.crm_discounts('discount_toggle',jsonb_build_object('id',item,'enabled',false));
+ if (public.validate_class_discount(code,'partnered','couple',3)->>'valid')::boolean then raise exception 'Disabled code accepted';end if;
+ insert into discount_test_results values('Disabled codes rejected',true);
+ params:=params||jsonb_build_object('id',item,'kind','fixed','value',9999,'enabled',true);
+ perform public.crm_discounts('discount_save',params);
+ if (public.validate_class_discount(code,'partnered','couple',3)->>'total')::numeric<>0 then raise exception 'Price below zero';end if;
+ insert into discount_test_results values('Fixed amount capped at subtotal',true);
+ params:=params||jsonb_build_object('starts_on',(now() at time zone 'Europe/Warsaw')::date-2,'ends_on',(now() at time zone 'Europe/Warsaw')::date-1);
+ perform public.crm_discounts('discount_save',params);
+ if (public.validate_class_discount(code,'partnered','couple',3)->>'valid')::boolean then raise exception 'Expired code accepted';end if;
+ insert into discount_test_results values('Expired code rejected',true);
+ denied:=false;begin perform public.crm_discounts('discount_save',params||jsonb_build_object('kind','percent','value',101));exception when check_violation then denied:=true;end;if not denied then raise exception 'Invalid percent accepted';end if;
+ insert into discount_test_results values('Invalid percentage rejected by database',true);
+ if has_table_privilege('anon','school_crm.discounts','SELECT') or has_table_privilege('authenticated','school_crm.discounts','SELECT') then raise exception 'Direct table access';end if;
+ insert into discount_test_results values('Direct code list reads denied',true);
+end $$;
+select * from discount_test_results;
+rollback;

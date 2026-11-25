@@ -2302,13 +2302,20 @@ function calculatePackageDiscount(base,code,request,rules=window.AURA_DISCOUNTS|
 function packageDiscountControls(r){
  return '<form class="discount-form" onsubmit="applyPackageDiscount(event,&quot;'+r.id+'&quot;)"><label for="discount-code">'+L('Discount code (optional)','Kod rabatowy (opcjonalnie)','Промокод (необязательно)','Промокод (необов’язково)')+'</label><div class="discount-input"><input id="discount-code" name="discountCode" value="'+ESC(r.quote.discountCode||'')+'" autocomplete="off" maxlength="40"><button class="btn light" type="submit">'+L('Apply','Zastosuj','Применить','Застосувати')+'</button></div><p class="small muted" data-discount-status role="status">'+(r.quote.discountCode?ESC(r.quote.discountCode)+' · −'+money(r.quote.discountAmount):'')+'</p>'+(r.quote.discountCode?'<button class="text-link" type="button" onclick="removePackageDiscount(&quot;'+r.id+'&quot;)">'+L('Remove discount','Usuń rabat','Убрать скидку','Прибрати знижку')+'</button>':'')+'</form>';
 }
-function applyPackageDiscount(event,id){
- event.preventDefault();const r=V.requests.find(item=>item.id===id);
+async function packageDiscountQuote(r,code){
+ const normalized=String(code||'').trim().toUpperCase(),base=r.quote.basePrice??r.quote.price;
+ if(!normalized)return {valid:true,code:'',amount:0,total:base,base};
+ if(typeof window.validateClassDiscount!=='function')throw Error(L('Please wait a moment and try again.','Poczekaj chwilę i spróbuj ponownie.','Подождите немного и попробуйте снова.','Зачекайте трохи й спробуйте знову.'));
+ return window.validateClassDiscount(normalized,r.target,r.party,GROUP_PACKAGES[r.registrationType].months);
+}
+async function applyPackageDiscount(event,id){
+ event.preventDefault();const form=event.currentTarget,r=V.requests.find(item=>item.id===id);
  if(!r?.directPackage||r.status!=='offered'||U.pay?.request!==id||U.pay.busy)return;
- const base=r.quote.basePrice??r.quote.price;
- const result=calculatePackageDiscount(base,event.currentTarget.elements.discountCode.value,r);
- if(!result.valid){event.currentTarget.querySelector('[data-discount-status]').textContent=L('This code is inactive, expired or not eligible for this package.','Kod jest nieaktywny, wygasł lub nie obejmuje tego pakietu.','Код неактивен, истёк или не подходит для пакета.','Код неактивний, минув або не підходить для пакета.');return;}
- r.quote.basePrice=base;r.quote.price=result.total;r.quote.discountCode=result.code;r.quote.discountAmount=result.amount;saveV();render();
+ const button=form.querySelector('button[type=submit]');button.disabled=true;
+ try{const result=await packageDiscountQuote(r,form.elements.discountCode.value);
+ if(!result.valid){form.querySelector('[data-discount-status]').textContent=L('This code is inactive, expired or not eligible for this package.','Kod jest nieaktywny, wygasł lub nie obejmuje tego pakietu.','Код неактивен, истёк или не подходит для пакета.','Код неактивний, минув або не підходить для пакета.');return;}
+ r.quote.basePrice=result.base;r.quote.price=result.total;r.quote.discountCode=result.code;r.quote.discountAmount=result.amount;saveV();render();
+ }catch(error){form.querySelector('[data-discount-status]').textContent=error.message;}finally{button.disabled=false;}
 }
 function removePackageDiscount(id){
  const r=V.requests.find(item=>item.id===id);if(!r?.directPackage||r.status!=='offered'||U.pay?.request!==id||U.pay.busy)return;
@@ -2324,14 +2331,16 @@ function packageClientSummary(r){
 function packagePaymentPage(r){
   return pageHead(L('Your package.<br><em>One final step.</em>','Twój pakiet.<br><em>Ostatni krok.</em>','Ваш пакет.<br><em>Последний шаг.</em>','Ваш пакет.<br><em>Останній крок.</em>'),' ',itemTitle(r.target))+`<div class="guided-shell compact-package-payment"><div class="card card-pad"><h2>${GROUP_PACKAGES[r.registrationType].name}</h2>${packageClientSummary(r)}<p class="notice">${L('Payment preview only. No money is collected. Class scheduling is arranged separately.','Podgląd płatności. Bez pobierania pieniędzy. Terminy zajęć ustalane osobno.','Демонстрация оплаты. Деньги не списываются. Расписание согласуется отдельно.','Демонстрація оплати. Кошти не списуються. Розклад узгоджується окремо.')}</p>${['blik','card','wallet'].map(k=>`<button class="select-card ${U.pay.method===k?'selected':''}" onclick="U.pay.method='${k}';render()"><span class="radio"></span>${k==='blik'?'BLIK':k==='card'?L('Card','Karta','Карта','Картка'):'Apple Pay / Google Pay'}</button>`).join('')}${packageDiscountControls(r)}${r.quote.discountCode?`<p class="small muted">${L('Original price','Cena pierwotna','Исходная цена','Початкова ціна')}: ${money(r.quote.basePrice)} · ${L('Discount','Rabat','Скидка','Знижка')}: −${money(r.quote.discountAmount)}</p>`:''}<div class="summary-total"><span>${L('Total','Suma','Итого','Разом')}</span><strong>${money(r.quote.price)}</strong></div><p class="error" id="pay-error" role="alert"></p><button class="btn" id="pay-now" onclick="completePackagePayment('${r.id}')">${L('Preview payment','Podgląd płatności','Проверить оплату','Перевірити оплату')} · ${money(r.quote.price)}</button></div></div>`;
 }
-function completePackagePayment(id){
+async function completePackagePayment(id){
   const r=V.requests.find(r=>r.id===id),p=U.pay;
   if(!r?.directPackage||r.status!=='offered'||p?.request!==id||p.busy)return;
   const error=document.getElementById('pay-error');
   if(document.getElementById('f-outcome')?.value==='failure'){error.textContent=L('Payment declined in this demo. You can retry.','Płatność odrzucona w demonstracji. Spróbuj ponownie.','Оплата отклонена в демо. Можно повторить.','Оплату відхилено в демо. Можна повторити.');return;}
   if(p.quoteVersion!==r.quote.version){error.textContent=L('Price changed. Reopen checkout.','Cena zmieniona. Otwórz płatność ponownie.','Цена изменилась. Откройте оплату заново.','Ціна змінилася. Відкрийте оплату знову.');return;}
-  const discount=calculatePackageDiscount(r.quote.basePrice??r.quote.price,r.quote.discountCode||'',r);
-  if(!discount.valid||discount.total!==r.quote.price){error.textContent=L('The discount changed or expired. Remove it or apply a valid code before continuing.','Rabat zmienił się lub wygasł. Usuń go lub zastosuj poprawny kod.','Скидка изменилась или истекла. Уберите её или примените действующий код.','Знижка змінилася або минула. Приберіть її або застосуйте дійсний код.');return;}
+  p.busy=true;document.getElementById('pay-now').disabled=true;
+  let discount;try{discount=await packageDiscountQuote(r,r.quote.discountCode||'');}catch(e){p.busy=false;document.getElementById('pay-now').disabled=false;error.textContent=e.message;return;}
+  if(U.pay!==p||r.status!=='offered')return;
+  if(!discount.valid||discount.total!==r.quote.price){p.busy=false;document.getElementById('pay-now').disabled=false;error.textContent=L('The discount changed or expired. Remove it or apply a valid code before continuing.','Rabat zmienił się lub wygasł. Usuń go lub zastosuj poprawny kod.','Скидка изменилась или истекла. Уберите её или примените действующий код.','Знижка змінилася або минула. Приберіть її або застосуйте дійсний код.');return;}
   p.busy=true;document.getElementById('pay-now').disabled=true;
   const order={id:uid('AT'),request:id,target:r.target,category:r.kind,total:r.quote.price,people:r.guests,method:p.method,status:'confirmed',created:new Date().toISOString(),quote:{...r.quote},packageId:r.registrationType,directPackage:true};
   V.orders.push(order);V.wallet.push({id:uid('PASS'),target:r.target,order:order.id,total:r.quote.lessons,remaining:r.quote.lessons,people:r.guests,directPackage:true,quote:{...r.quote},slot:r.slot});

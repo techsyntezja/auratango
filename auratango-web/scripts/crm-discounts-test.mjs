@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const html=fs.readFileSync('dist/index.html','utf8');
+const code=html.slice(html.indexOf('async function packageDiscountQuote('),html.indexOf('async function applyPackageDiscount('));
+let calls=[];const ctx={window:{validateClassDiscount:async(...args)=>{calls.push(args);return {valid:true,base:1320,amount:132,total:1188,code:'AURA-TEST10'};}},GROUP_PACKAGES:{flow:{months:3}},L:(en)=>en};
+vm.createContext(ctx);vm.runInContext(code,ctx);
+const request={target:'partnered',party:'couple',registrationType:'flow',quote:{price:1320}};
+let result=await ctx.packageDiscountQuote(request,' aura-test10 ');assert.equal(result.total,1188);assert.deepEqual(calls[0],['AURA-TEST10','partnered','couple',3]);
+request.quote={basePrice:1320,price:1188};result=await ctx.packageDiscountQuote(request,'');assert.equal(result.total,1320);assert.equal(calls.length,1);
+ctx.window.validateClassDiscount=async()=>({valid:false});assert.equal((await ctx.packageDiscountQuote(request,'EXPIRED')).valid,false);
+ctx.window.validateClassDiscount=undefined;await assert.rejects(()=>ctx.packageDiscountQuote(request,'AURA-TEST10'),/wait/);
+console.log('PASS: checkout uses normalized server-validated class/package quote, restores base on removal, rejects unavailable codes and service errors.');

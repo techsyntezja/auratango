@@ -1,6 +1,6 @@
 import {readFile} from 'node:fs/promises';
 const COOKIE='aura_crm_session', REFRESH='aura_crm_refresh';
-const actions=new Set(['load','lead_save','note','class_save','book','cancel','attendance','convert','membership']);
+const actions=new Set(['load','lead_save','note','class_save','book','cancel','attendance','convert','membership','discount_list','discount_save','discount_toggle']);
 function cookies(req){return Object.fromEntries(String(req.headers.cookie||'').split(';').filter(x=>x.includes('=')).map(x=>{const i=x.indexOf('=');return [x.slice(0,i).trim(),decodeURIComponent(x.slice(i+1))];}));}
 function setSession(req,res,session){const secure=(req.headers['x-forwarded-proto']==='https'||!String(req.headers.host).startsWith('127.0.0.1'))?'; Secure':'';res.setHeader('Set-Cookie',[`${COOKIE}=${encodeURIComponent(session?.access_token||'')}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${session?Math.min(session.expires_in||3600,3600):0}${secure}`,`${REFRESH}=${encodeURIComponent(session?.refresh_token||'')}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${session?604800:0}${secure}`]);}
 export function createHandler({fetcher=fetch,readPage=()=>readFile(new URL('../auratango-web/dist/dashboard.html',import.meta.url),'utf8'),env=process.env}={}){
@@ -61,7 +61,7 @@ export function createHandler({fetcher=fetch,readPage=()=>readFile(new URL('../a
    }
    if(!access.admin)return send(403,{message:'School administrator access required.'});
    if(!actions.has(action)||req.method!=='POST')return send(400,{message:'Unknown CRM action'});
-   return send(200,await upstream('/rest/v1/rpc/crm_staff',token,{method:'POST',body:JSON.stringify({p_action:action,p_data:payload.payload||{}})}));
+   return send(200,await upstream((action.startsWith('discount_')?'/rest/v1/rpc/crm_discounts':'/rest/v1/rpc/crm_staff'),token,{method:'POST',body:JSON.stringify({p_action:action,p_data:payload.payload||{}})}));
   }catch(error){const status=error.status===400?400:error.status===401?401:error.status===403?403:500;return send(status,{message:status===500?'Unable to complete this request. Please retry.':error.message});}
  };
 }

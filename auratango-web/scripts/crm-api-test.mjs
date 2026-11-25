@@ -5,6 +5,7 @@ const fetcher=async(url,options={})=>{calls.push({url,options});if(url.includes(
 const handler=createHandler({fetcher,env:{SUPABASE_URL:'https://test.supabase.co',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_test'},readPage:async()=>'<html>Sign in</html>'});
 async function run(action,{cookie,origin='https://school.example',method='POST',payload={}}={}){const req={method,url:'/api/crm',headers:{host:'school.example',origin,...(cookie?{cookie}:{})},body:{action,payload}};const headers={};let text;const res={statusCode:200,setHeader:(name,value)=>headers[name]=value,end:value=>text=value};await handler(req,res);return {status:res.statusCode,headers,body:JSON.parse(text)};}
 assert.equal((await run('load')).status,401);
+assert.equal((await run('discount_list')).status,401);
 assert.equal((await run('load',{origin:'https://evil.example',cookie:'aura_crm_session=test-token'})).status,403);
 assert.equal((await run('load',{origin:null})).status,403);
 admin=false;assert.equal((await run('load',{cookie:'aura_crm_session=test-token'})).status,403);
@@ -21,6 +22,9 @@ assert.equal((await run('studio_request',{...shared,payload:{path:'/rest/v1/site
 assert.equal((await run('studio_upload',{...shared,payload:{extension:'png'}})).status,403);
 assert.equal((await run('studio_request',{...shared,payload:{path:'/rest/v1/private_lesson_settings?teacher=eq.anna',method:'PATCH',body:{revision:1}}})).status,200);
 assert(calls.some(c=>c.url.includes('/private_lesson_settings')&&c.options.headers.Prefer==='return=representation'));
+assert.equal((await run('discount_save',{...shared,payload:{code:'DENIED'}})).status,403);
 admin=true;teacher=null;
+assert.equal((await run('discount_list',shared)).status,200);
+assert(calls.some(c=>c.url.endsWith('/rpc/crm_discounts')&&JSON.parse(c.options.body).p_action==='discount_list'));
 const signedOut=await run('logout',{cookie:'aura_crm_session=test-token'});assert(signedOut.headers['Set-Cookie'].every(c=>c.includes('Max-Age=0')));
 console.log('PASS: server rejects anonymous, non-admin and cross-origin requests; rechecks role for reads; HttpOnly secure session; sign-out clears cookies; shared editor session and teacher restrictions preserved.');

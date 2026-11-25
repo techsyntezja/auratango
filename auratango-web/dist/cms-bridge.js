@@ -70,3 +70,5 @@ if (configured) {
       applyPrivateLessonCatalog(null);
     });
 } else applyPrivateLessonCatalog({});
+
+window.validateClassDiscount=(code,offer,party,months)=>request('/rest/v1/rpc/validate_class_discount',{method:'POST',body:JSON.stringify({p_code:code,p_offer:offer,p_party:party,p_months:months})});

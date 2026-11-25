@@ -10,6 +10,7 @@ if(process.argv.includes('--schedule-data'))empty.classes=[
  {id:'fixture-25',group_name:'Newborn',class_type:'Partner groups',starts_at:'2026-11-25T14:00:00Z',ends_at:'2026-11-25T15:15:00Z',instructor:'Fixture teacher',room:'Test room',capacity:12},
  {id:'fixture-26',group_name:'Toddler',class_type:'Ladies Solo',starts_at:'2026-11-26T09:00:00Z',ends_at:'2026-11-26T11:00:00Z',instructor:'Fixture teacher',room:'Test room',capacity:12}
 ];
+const fixtureDiscounts=[];
 const fetcher=async(url,options={})=>{
  if(url.includes('grant_type=password')){const credentials=JSON.parse(options.body);return credentials.email==='staff@example.invalid'&&credentials.password==='demo-only'?Response.json({access_token:'fixture-session',refresh_token:'fixture-refresh',expires_in:3600}):Response.json({message:'Invalid test credentials'},{status:400});}
  if(url.endsWith('/auth/v1/user'))return options.headers.Authorization==='Bearer fixture-session'?Response.json({id:'fixture-owner'}):Response.json({message:'Not signed in'},{status:401});
@@ -18,6 +19,7 @@ const fetcher=async(url,options={})=>{
  if(url.includes('/site_content')){if(options.method==='PATCH')content.published=JSON.parse(options.body).published;return Response.json([{published:content.published}]);}
  if(url.includes('/site_drafts')){if(options.method==='PATCH')content.draft=JSON.parse(options.body).draft;return Response.json([{draft:content.draft}]);}
  if(url.includes('/private_lesson_settings'))return Response.json([]);
+ if(url.includes('/rpc/crm_discounts')){const {p_action,p_data}=JSON.parse(options.body);if(p_action==='discount_list')return Response.json(fixtureDiscounts);if(p_action==='discount_save'){const id=p_data.id||crypto.randomUUID();const index=fixtureDiscounts.findIndex(d=>d.id===id);const row={...p_data,id,months:p_data.months?Number(p_data.months):null,created_at:new Date().toISOString()};if(index<0)fixtureDiscounts.push(row);else fixtureDiscounts[index]=row;return Response.json({id});}const row=fixtureDiscounts.find(d=>d.id===p_data.id);row.enabled=p_data.enabled;return Response.json({id:row.id});}
  if(url.includes('/rpc/crm_staff'))return Response.json(empty);
  return Response.json({});
 };

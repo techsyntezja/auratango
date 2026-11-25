@@ -60,3 +60,11 @@ Import the repository with Root Directory left at the repository root. The root 
 ## Shared staff sign-in
 
 /dashboard is the single staff login. /backstage automatically reuses the same HttpOnly session; when signed out it redirects to /dashboard?next=backstage and returns to the editor after login. Administrators can switch between CRM and editor; assigned teachers are sent to their editor settings and cannot load CRM records or edit site content. Sign-out clears the shared session. Editor reads/saves go through the role-checked server proxy; image uploads use a signed, single-object upload URL without exposing the staff access token. No password or access token is stored in browser storage. For isolated manual testing run node scripts/shared-login-preview.mjs and use the disposable fixture credentials documented in that script; it never accesses real accounts.
+
+### Class package discounts
+
+Staff: open `/dashboard#discounts`. Create a percentage or fixed zł code, choose eligible group classes and package duration, and optionally set a last valid day. Codes are reusable; they do not stack. Disable a code to stop new applications. Customers enter the code on the package payment preview, where the database validates eligibility, Warsaw validity dates and the subtotal. Checkout validates it again before completing the preview. Trial and private lesson discounts are outside this version.
+
+Setup on another database: apply `supabase/crm-discounts.sql` after the CRM schema. It adds the private RLS-protected `school_crm.discounts` table, the administrator-checked `crm_discounts` RPC, and a limited public `validate_class_discount` RPC. The public RPC returns a quote only for a supplied code and does not expose the list or internal labels. The public function's intentional SECURITY DEFINER advisory and private table's no-policy advisory reflect this narrow API design; direct table privileges are revoked. Real payment capture, usage limits and redemption accounting are not implemented.
+
+Validation: `node scripts/crm-discounts-test.mjs`, `node scripts/crm-api-test.mjs`; run `supabase/crm-discounts-test.sql` for rollback-only database checks. No test discount is retained in production.
