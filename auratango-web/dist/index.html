@@ -1501,9 +1501,17 @@ function openTrialJourney(offer='ladies',party='solo'){
 }
 function trialJourneyStep(stage){if(!U.trial||U.trial.busy)return;U.trial.stage=stage;renderTrialJourney();}
 function chooseTrialActivity(offer){if(!U.trial||!isGroupClass(offer))return;if(U.trial.offer!==offer){U.trial.details.preferredDate='';U.trial.details['trial-slot']='';}U.trial.offer=offer;if(offer==='ladies')U.trial.party='solo';trialJourneyStep('details');}
+function ensureTrialCalendarTime(){
+ const t=U.trial,d=t.details,date=d.preferredDate;
+ if(!date)return;
+ const now=warsawDateTime(),today=now.slice(0,10),day=new Date(date+'T12:00:00Z').getUTCDay();
+ const times=date>=today?SLOTS.filter(slot=>slot.offer===t.offer&&slot.day===day&&(date!==today||slot.start>now.slice(11,16))):[];
+ if(!times.some(slot=>slot.id===d['trial-slot']))d['trial-slot']=times.length===1?times[0].id:'';
+}
 function saveTrialDraft(form){
  if(!U.trial)return;const d=Object.fromEntries(new FormData(form));
  U.trial.details={...U.trial.details,...d};if(Object.hasOwn(d,'party'))U.trial.party=U.trial.offer==='partnered'&&d.party==='couple'?'couple':'solo';
+ ensureTrialCalendarTime();const slotField=form.elements?.namedItem('trial-slot');if(slotField)slotField.value=U.trial.details['trial-slot']||'';
 }
 
 function trialStudioChoices(selected){
@@ -1535,7 +1543,7 @@ function trialCalendarMarkup(){
 function trialCalendarField(){return '<section class="trial-calendar-field"><h3>'+L('Preferred class time','Preferowany termin','Предпочтительное время','Бажаний час')+'</h3><div data-trial-calendar>'+trialCalendarMarkup()+'</div></section>';}
 function refreshTrialCalendar(form){form.querySelector('[data-trial-calendar]').innerHTML=trialCalendarMarkup();}
 function moveTrialCalendar(amount,form){saveTrialDraft(form);const current=U.trial.calendarMonth||U.trial.details.preferredDate?.slice(0,7)||warsawDateTime().slice(0,7);const [year,month]=current.split('-').map(Number);const d=new Date(Date.UTC(year,month-1+amount,1));U.trial.calendarMonth=d.toISOString().slice(0,7);refreshTrialCalendar(form);}
-function selectTrialCalendarDate(date,form){saveTrialDraft(form);const today=warsawDateTime().slice(0,10),day=new Date(date+'T12:00:00Z').getUTCDay();if(date<today||!SLOTS.some(slot=>slot.offer===U.trial.offer&&slot.day===day&&(date!==today||slot.start>warsawDateTime().slice(11,16))))return;U.trial.details.preferredDate=date;U.trial.details['trial-slot']='';refreshTrialCalendar(form);}
+function selectTrialCalendarDate(date,form){saveTrialDraft(form);const today=warsawDateTime().slice(0,10),day=new Date(date+'T12:00:00Z').getUTCDay();if(date<today||!SLOTS.some(slot=>slot.offer===U.trial.offer&&slot.day===day&&(date!==today||slot.start>warsawDateTime().slice(11,16))))return;const sameDate=U.trial.details.preferredDate===date;U.trial.details.preferredDate=date;if(!sameDate)U.trial.details['trial-slot']='';ensureTrialCalendarTime();refreshTrialCalendar(form);}
 function selectTrialCalendarTime(id,form){saveTrialDraft(form);const date=U.trial.details.preferredDate,slot=SLOTS.find(slot=>slot.id===id&&slot.offer===U.trial.offer);if(!date||!slot||slot.day!==new Date(date+'T12:00:00Z').getUTCDay())return;U.trial.details['trial-slot']=id;refreshTrialCalendar(form);}
 function clearTrialCalendar(form){saveTrialDraft(form);U.trial.details.preferredDate='';U.trial.details['trial-slot']='';refreshTrialCalendar(form);}
 

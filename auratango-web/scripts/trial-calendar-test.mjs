@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const html=fs.readFileSync('dist/index.html','utf8');
+const code=html.slice(html.indexOf('function ensureTrialCalendarTime(){'),html.indexOf('function trialStudioChoices('));
+const ctx={U:{trial:{offer:'ladies',party:'solo',details:{}}},SLOTS:[{id:'ladies-sat',offer:'ladies',day:6,start:'10:00',end:'12:00'},{id:'partner-a',offer:'partnered',day:6,start:'15:00'},{id:'partner-b',offer:'partnered',day:6,start:'16:15'}],warsawDateTime:()=> '2026-11-25T09:00',FormData:class{constructor(form){return Object.entries(form.values)}}};
+vm.createContext(ctx);vm.runInContext(code,ctx);
+const form={values:{preferredDate:'2026-11-28','trial-slot':''},elements:{namedItem:()=>field}},field={value:''};
+ctx.saveTrialDraft(form);assert.equal(ctx.U.trial.details['trial-slot'],'ladies-sat');assert.equal(field.value,'ladies-sat');
+ctx.U.trial.offer='partnered';ctx.saveTrialDraft(form);assert.equal(ctx.U.trial.details['trial-slot'],'');
+form.values['trial-slot']='partner-b';ctx.saveTrialDraft(form);assert.equal(ctx.U.trial.details['trial-slot'],'partner-b');
+form.values.preferredDate='2026-11-29';ctx.saveTrialDraft(form);assert.equal(ctx.U.trial.details['trial-slot'],'');
+ctx.U.trial.offer='ladies';form.values.preferredDate='2026-11-21';ctx.saveTrialDraft(form);assert.equal(ctx.U.trial.details['trial-slot'],'');
+console.log('PASS: single time auto-selection, form value saved, multiple times require choice, explicit choice retained, wrong-day and past selections rejected.');
