@@ -1979,8 +1979,7 @@ function privateRequestTime(request){
 }
 function privateRequestDetails(request){
   const teacher=privateTeachers[request.teacher]||L('Help me choose','Pomóżcie wybrać','Помогите выбрать','Допоможіть обрати');
-  const format=privateLessonOptions().find(([id])=>id===request.lessonOption)?.[1]||W('pending');
-  return `<span>${teacher}</span><br><span>${format}</span><br><span>${privateRequestTime(request)}</span>`;
+  return `<span>${teacher}</span><br><span>${privateRequestTime(request)}</span>`;
 }
 let privateLessonSettings;
 let activePrivateHold=null;
@@ -2122,7 +2121,6 @@ function privateRequestFields(wizard){
     ${teachers}
   </fieldset>
     <fieldset class="private-choice-field"><legend>${preferredLocationTitle()}</legend><div class="private-choice-grid">${Object.entries(locations).map(([id,studio])=>`<label class="private-choice-card"><input type="radio" name="preferredLocation" value="${id}" ${wizard.preferredLocation===id?'checked':''} required><img src="/studio-dancing-atmosphere.png" alt=""><span><strong>${ESC(studio.name)}</strong><small>${ESC(studio.address)}</small></span></label>`).join('')}</div></fieldset>
-    <fieldset class="private-choice-field"><legend>${L('Lesson option','Opcja lekcji','Формат урока','Формат уроку')}</legend><div class="private-choice-grid private-lesson-grid">${privateLessonOptions().map(([id,label])=>{const price=privateLessonPrice(wizard.teacher,id);return `<label class="private-choice-card private-lesson-card"><input type="radio" name="lessonOption" value="${id}" ${wizard.lessonOption===id?'checked':''} required><span><strong>${label}</strong>${price===null?'':`<small>${money(price)}</small>`}</span></label>`}).join('')}</div></fieldset>
     ${privateBookingSchedule(wizard)}
     ${notice(L('Choose the first session’s date and time. The studio confirms availability, price and any follow-up dates.','Wybierz datę i godzinę pierwszego spotkania. Studio potwierdzi dostępność, cenę i kolejne terminy.','Выберите дату и время первого занятия. Студия подтвердит доступность, цену и следующие даты.','Оберіть дату й час першого заняття. Студія підтвердить доступність, ціну й наступні дати.'))}
     <p class="error" id="private-request-error" role="alert"></p>`;
@@ -2190,7 +2188,7 @@ async function submitRequest(){let w=U.wizard;if(!w||privateHoldBusy)return;
   }
   const isPrivate=w.id==='private';
   const times=isPrivate?futurePrivateTimes(w.teacher):null;
-  if(isPrivate&&(!privateLessonSettings||!Object.hasOwn(privateTeachers,w.teacher)||!Object.hasOwn(privateLessonCount,w.lessonOption)
+  if(isPrivate&&(!privateLessonSettings||!Object.hasOwn(privateTeachers,w.teacher)
     ||!validPrivateTime(w.preferredDate,w.preferredTime)||(times!==null&&!times.includes(`${w.preferredDate}T${w.preferredTime}`)))){
     U.step=0;render();
     document.getElementById('private-request-error').textContent=privateTimeError();
