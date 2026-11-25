@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {warsawClassDay,scheduleClasses} from '../dist/crm-schedule.js';
+const rows=[{id:'later',starts_at:'2026-11-25T15:00:00Z'},{id:'midnight',starts_at:'2026-11-24T23:30:00Z'},{id:'next',starts_at:'2026-11-26T09:00:00Z'},{id:'cancelled',starts_at:'2026-11-25T10:00:00Z',cancelled:true}];
+assert.equal(warsawClassDay(rows[1].starts_at),'2026-11-25');
+assert.deepEqual(scheduleClasses(rows,'2026-11-25').map(x=>x.id),['midnight','later']);
+assert.deepEqual(scheduleClasses(rows,'2026-11-26').map(x=>x.id),['next']);
+assert.deepEqual(scheduleClasses(rows,'2026-11-27'),[]);
+assert.equal(scheduleClasses(rows).length,3);
+assert.equal(scheduleClasses([]).length,0);
+assert.equal(warsawClassDay('2026-06-01T22:30:00Z'),'2026-06-02');
+assert.equal(warsawClassDay('invalid'),'');
+assert.deepEqual(rows.map(x=>x.id),['later','midnight','next','cancelled']);
+console.log('PASS: Warsaw date boundaries, daylight saving, exact dates, sorting, cancellations, empty lists and clearing date filter.');

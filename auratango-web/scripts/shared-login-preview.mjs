@@ -6,6 +6,10 @@ import {createHandler} from '../../api/crm.mjs';
 const root=path.resolve('dist'),port=4189;
 const content={draft:{edits:{},theme:{}},published:{edits:{},theme:{}}};
 const empty={leads:[],classes:[],bookings:[],students:[],memberships:[],history:[]};
+if(process.argv.includes('--schedule-data'))empty.classes=[
+ {id:'fixture-25',group_name:'Newborn',class_type:'Partner groups',starts_at:'2026-11-25T14:00:00Z',ends_at:'2026-11-25T15:15:00Z',instructor:'Fixture teacher',room:'Test room',capacity:12},
+ {id:'fixture-26',group_name:'Toddler',class_type:'Ladies Solo',starts_at:'2026-11-26T09:00:00Z',ends_at:'2026-11-26T11:00:00Z',instructor:'Fixture teacher',room:'Test room',capacity:12}
+];
 const fetcher=async(url,options={})=>{
  if(url.includes('grant_type=password')){const credentials=JSON.parse(options.body);return credentials.email==='staff@example.invalid'&&credentials.password==='demo-only'?Response.json({access_token:'fixture-session',refresh_token:'fixture-refresh',expires_in:3600}):Response.json({message:'Invalid test credentials'},{status:400});}
  if(url.endsWith('/auth/v1/user'))return options.headers.Authorization==='Bearer fixture-session'?Response.json({id:'fixture-owner'}):Response.json({message:'Not signed in'},{status:401});
