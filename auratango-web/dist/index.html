@@ -2165,7 +2165,7 @@ function privateBookingSchedule(wizard){
   const times=futurePrivateTimes(wizard.teacher);
   if(times===null)return `<div class="form-grid">
     ${field('preferredDate',L('Preferred date','Preferowana data','Желаемая дата','Бажана дата'),'date',wizard.preferredDate||'',`required min="${warsawDateTime().slice(0,10)}"`)}
-    ${sel('preferredTime',L('Preferred start time · Warsaw','Preferowana godzina · Warszawa','Желаемое время · Варшава','Бажаний час · Варшава'),[['',L('Choose a time','Wybierz godzinę','Выберите время','Оберіть час')],...Array.from({length:48},(_,i)=>{const time=String(Math.floor(i/2)).padStart(2,'0')+':'+(i%2?'30':'00');return [time,time]})],wizard.preferredTime||'','required')}
+    ${sel('preferredTime',L('Preferred start time · Warsaw','Preferowana godzina · Warszawa','Желаемое время · Варшава','Бажаний час · Варшава'),[['',L('Choose a time','Wybierz godzinę','Выберите время','Оберіть час')],...Array.from({length:29},(_,i)=>{const time=String(8+Math.floor(i/2)).padStart(2,'0')+':'+(i%2?'30':'00');return [time,time]})],wizard.preferredTime||'','required')}
   </div>`;
   const prompt=times.length?L('Choose a start time','Wybierz godzinę','Выберите время','Оберіть час'):L('No upcoming times for this teacher','Brak terminów u tego nauczyciela','У этого преподавателя нет свободного времени','У цього викладача немає доступних годин');
   const chosen=`${wizard.preferredDate||''}T${wizard.preferredTime||''}`;
