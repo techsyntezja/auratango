@@ -2838,11 +2838,14 @@ else if(!timetableTrialShown&&window.parent===window){
   timetableTrialShown=true;
   openTimetableTrial();
 }
+// Open the finder over the current page instead of routing through its landing banner.
+document.querySelectorAll('a[href="#/start"]').forEach(link=>link.setAttribute('aria-haspopup','dialog'));
 document.querySelectorAll('a[href^="#/"]').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.more-nav[open]').forEach(x=>x.open=false)}));
 if(!matchMedia('(prefers-reduced-motion:reduce)').matches&&matchMedia('(pointer:fine)').matches)document.querySelectorAll('.path-card,.image-event').forEach(el=>el.addEventListener('pointermove',e=>{const b=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-b.left)+'px');el.style.setProperty('--my',(e.clientY-b.top)+'px')},{passive:true}));
 };
 /* Source media and editorial narrative retained; known obsolete single-hour description corrected. */
 for(const a of essays){a.sections=a.sections.map(([h,p])=>[h,p.map(s=>s.replace('An hour for yourself','Time for yourself').replace('An hour to yourself','Time for yourself'))])}
+document.addEventListener('click',event=>{const link=event.target.closest('a[href="#/start"]');if(!link||link.hasAttribute('onclick')||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;event.preventDefault();event.stopPropagation();openQuiz();},true);
 state.classFilter='all';state.editorialFilter='all';state.editorialSearch='';
 render();
 </script><script id="auratango-display-controls">
