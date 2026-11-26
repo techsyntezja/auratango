@@ -2742,6 +2742,8 @@ function addVisitorBackLinks(){
  addBookingAgreements();
  document.querySelectorAll('#modal-root form,#main form').forEach(form=>{
   if(form.closest('.course-card')||form.classList.contains('package-popup')||form.classList.contains('contact-choice-form')||form.classList.contains('contact-reason-form')||form.classList.contains('discount-form')||form.classList.contains('trial-class-picker')||form.querySelector('[data-form-back]'))return;
+  // Booking forms already provide a Back link immediately below their heading.
+  if(form.closest('.request-form-shell')?.querySelector('.request-top-back')){form.querySelectorAll('.form-back-link').forEach(button=>button.remove());return;}
   // Forms nested in the same dialog share one top-level back control.
   if(form.closest('#modal-root')&&form!==document.querySelector('#modal-root form'))return;
   const button=document.createElement('button');button.type='button';button.className='text-link form-back-link';button.dataset.formBack='';button.textContent='← '+L('Back','Wstecz','Назад','Назад');button.setAttribute('onclick','visitorFormBack(this)');
