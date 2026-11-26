@@ -13,3 +13,11 @@ window.persistTrialLead=async function(trial){
  if(!response.ok){const body=await response.json().catch(()=>({}));throw Error(body.message||'Your inquiry could not be saved. Please try again.');}
  trial.crmSaved=true;return response.json();
 };
+
+window.persistContactRequest=async function(form,reason){
+ const config=window.AURA_CONFIG;if(!config?.supabaseUrl||!config.supabaseKey)throw Error('Requests are temporarily unavailable. Please try again later.');
+ form.dataset.submissionId||=crypto.randomUUID();const data={...Object.fromEntries(new FormData(form)),reason,submission_id:form.dataset.submissionId};
+ const response=await fetch(config.supabaseUrl.replace(/\/$/,'')+'/rest/v1/rpc/crm_contact_inquiry',{method:'POST',headers:{apikey:config.supabaseKey,'Content-Type':'application/json'},body:JSON.stringify({p_data:data})});
+ if(!response.ok){const body=await response.json().catch(()=>({}));throw Error(body.message||'Your request could not be sent. Please try again.');}
+ const result=await response.json();if(!result?.saved)throw Error('Your request could not be confirmed. Please try again.');return result;
+};
