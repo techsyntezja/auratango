@@ -19,5 +19,6 @@ window.persistContactRequest=async function(form,reason,details={}){
  form.dataset.submissionId||=crypto.randomUUID();const data={...Object.fromEntries(new FormData(form)),...details,reason,submission_id:form.dataset.submissionId};
  const response=await fetch(config.supabaseUrl.replace(/\/$/,'')+'/rest/v1/rpc/crm_contact_inquiry',{method:'POST',headers:{apikey:config.supabaseKey,'Content-Type':'application/json'},body:JSON.stringify({p_data:data})});
  if(!response.ok){const body=await response.json().catch(()=>({}));throw Error(body.message||'Your request could not be sent. Please try again.');}
- const result=await response.json();if(!result?.saved)throw Error('Your request could not be confirmed. Please try again.');return result;
+ const result=await response.json();if(!result?.saved)throw Error('Your request could not be confirmed. Please try again.');
+ if(typeof V!=='undefined'&&typeof saveV==='function'){V.contactRequests??=[];if(!V.contactRequests.some(item=>item.id===data.submission_id)){V.contactRequests.push({id:data.submission_id,reason:data.reason,name:data.name,email:data.email,phone:data.phone||'',eventDate:data.eventDate||'',venue:data.venue||'',message:data.message,created:new Date().toISOString()});saveV();}}return result;
 };
