@@ -20,7 +20,7 @@ function apply(){
   }
   for(const [key,value] of Object.entries(content.theme||{}))if(/^--[a-z-]+$/.test(key)&&/^#[0-9a-f]{6}$/i.test(value))document.documentElement.style.setProperty(key,value);
   for(const [key,edit] of Object.entries(content.edits?.[context()]||{})){
-    const el=find(edit.targetKey||key);if(!el || el.tagName!==edit.tag)continue;
+    const el=find(edit.targetKey||key);if(!el || el.tagName!==edit.tag || el.closest('[data-commerce-value]'))continue;
     if(edit.kind==='text-node'){const node=el.childNodes[edit.nodeIndex];if(node?.nodeType===3&&node.nodeValue.trim()!==edit.value)node.nodeValue=edit.value;}
     if(edit.kind==='text' && !el.children.length && el.textContent!==edit.value)el.textContent=edit.value;
     if(edit.kind==='image' && el.tagName==='IMG' && validUrl(edit.value) && el.getAttribute('src')!==edit.value)el.src=edit.value;
