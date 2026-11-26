@@ -34,7 +34,16 @@ function renderEditFields(){
  editChoices.forEach((choice,index)=>{
   const label=document.createElement('label');label.textContent=choice.label||(choice.kind==='image'?'Image URL':choice.kind==='link'?'Link destination':'Text');
   const input=document.createElement(choice.kind==='text'||choice.kind==='text-node'?'textarea':'input');input.dataset.index=index;input.value=choice.value||'';if(input.tagName==='TEXTAREA')input.rows=2;label.append(input);
-  if(choice.kind==='image'){const uploadLabel=document.createElement('label');uploadLabel.textContent='Upload replacement image';const file=document.createElement('input');file.type='file';file.accept='image/jpeg,image/png,image/webp,image/gif';file.onchange=async()=>{if(!file.files[0])return;try{input.value=await upload(file.files[0]);status('Image uploaded. Apply this section to your draft.');}catch(error){status(error.message);}};uploadLabel.append(file);label.append(uploadLabel);}
+  if(choice.kind==='image'){
+   const uploadLabel=document.createElement('div');uploadLabel.className='image-upload';
+   const title=document.createElement('strong');title.textContent='Upload replacement image';
+   const help=document.createElement('small');help.textContent='JPEG, PNG, WebP or GIF · Maximum file size: 10 MB';
+   const file=document.createElement('input');file.type='file';file.accept='image/jpeg,image/png,image/webp,image/gif';file.hidden=true;file.setAttribute('aria-label','Upload replacement image');
+   const choose=document.createElement('button');choose.type='button';choose.textContent='Choose file';choose.onclick=()=>file.click();
+   const info=document.createElement('span');info.textContent='No file chosen';info.setAttribute('role','status');
+   file.onchange=async()=>{const selectedFile=file.files[0];if(!selectedFile)return;const size=selectedFile.size>=1024*1024?(selectedFile.size/(1024*1024)).toFixed(2)+' MB':Math.ceil(selectedFile.size/1024)+' KB';info.textContent=selectedFile.name+' · '+size;choose.disabled=true;try{input.value=await upload(selectedFile);status('Image uploaded. Apply this section to your draft.');}catch(error){status(error.message);}finally{choose.disabled=false;}};
+   uploadLabel.append(title,help,choose,info,file);label.append(uploadLabel);
+  }
   fields.append(label);
  });
 }
