@@ -1,0 +1,12 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const html=fs.readFileSync('dist/index.html','utf8'),start=html.indexOf('function resetTrialChoices('),end=html.indexOf('function updateTrialParty(',start);const context={U:{trial:null}};vm.createContext(context);vm.runInContext(html.slice(start,end),context);
+const trial=()=>({offer:'partnered',party:'couple',method:'card',calendarMonth:'2026-12',details:{preferredLocation:'solec',preferredDate:'2026-12-05','trial-slot':'sat-1615',fullName:'Retained name',email:'customer@example.invalid',agreeTerms:true,agreePrivacy:true}});
+for(const changed of ['party','offer','preferredLocation']){context.U.trial=trial();context.resetTrialChoices(changed);const t=context.U.trial;assert.equal(t.details.preferredLocation,changed==='preferredLocation'?'solec':'');assert.equal(t.details.preferredDate,'');assert.equal(t.details['trial-slot'],'');assert.equal(t.calendarMonth,undefined);assert.equal(t.method,'blik');assert.equal(t.details.agreeTerms,false);assert.equal(t.details.fullName,'Retained name');assert.equal(t.party,'couple');}
+console.log('PASS: trial group/class changes clear studio/date/time, studio changes clear date/time, confirmations reset and contact details retained.');
+
+let changes,calendarUpdates=0;const radios=[{value:'goclaw',checked:false},{value:'solec',checked:true}],price={textContent:''};
+const form={querySelectorAll:()=>radios,querySelector:s=>s==='[data-trial-draft-price]'?price:s==='[data-trial-calendar]'?{}:null};
+context.document={addEventListener:(event,fn)=>changes=fn};context.saveTrialDraft=()=>{};context.groupTrialPrice=(offer,party)=>party==='couple'?58:29;context.refreshTrialCalendar=()=>calendarUpdates++;context.renderTrialJourney=()=>{throw Error('Whole form must not rerender on change');};
+const inPlace=html.indexOf('function refreshTrialChoicesInPlace('),inPlaceEnd=html.indexOf('function continueTrialRegistration(',inPlace);vm.runInContext(html.slice(inPlace,inPlaceEnd),context);context.U.trial=trial();context.updateTrialParty(form);assert.equal(price.textContent,'58 zł');assert(radios.every(r=>!r.checked));assert.equal(calendarUpdates,1);
+context.U.trial.stage='details';context.U.trial.details.preferredLocation='goclaw';changes({target:{matches:()=>true,form}});assert.equal(radios[0].checked,true);assert.equal(radios[1].checked,false);assert.equal(calendarUpdates,2);
+console.log('PASS: changing group/studio updates controls in place without rebuilding the modal.');

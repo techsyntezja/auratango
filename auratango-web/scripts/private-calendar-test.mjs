@@ -1,0 +1,8 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const source=fs.readFileSync('dist/index.html','utf8'),start=source.indexOf('function privateCalendarMarkup('),end=source.indexOf('function privateBookingSchedule(',start);const calendar={innerHTML:''},caption={textContent:''},form={elements:{preferredDate:{value:''},preferredTime:{value:'15:00'}},querySelector:s=>s==='[data-private-calendar]'?calendar:s==='[data-private-selected-date]'?caption:null};let resets=0;
+const context={U:{wizard:{id:'private',preferredDate:'2026-11-28',preferredTime:'15:00'}},state:{lang:'en'},Intl,Date,L:en=>en,ESC:x=>x,warsawDateTime:()=> '2026-11-28T12:00',dateLabel:x=>x,keepRequestDraft(){},resetPrivateBookingChoices(){resets++;context.U.wizard.preferredTime='';}};vm.createContext(context);vm.runInContext(source.slice(start,end),context);
+let markup=context.privateCalendarMarkup(context.U.wizard);assert.match(markup,/November 2026/);assert.match(markup,/Previous month/);assert.match(markup,/aria-pressed="true"/);
+context.selectPrivateCalendarDate(form,'2026-11-29');assert.equal(context.U.wizard.preferredDate,'2026-11-29');assert.equal(form.elements.preferredTime.value,'');assert.equal(resets,1);assert.equal(caption.textContent,'2026-11-29');
+context.selectPrivateCalendarDate(form,'2026-11-27');assert.equal(context.U.wizard.preferredDate,'2026-11-29');
+context.movePrivateCalendar(form,1);assert.match(calendar.innerHTML,/December 2026/);assert.equal(context.U.wizard.preferredDate,'2026-11-29');context.movePrivateCalendar(form,-2);assert.equal(context.U.wizard.privateCalendarMonth,'2026-11');
+console.log('PASS: inline calendar selection, time reset, selected date caption, past-date rejection and month navigation.');

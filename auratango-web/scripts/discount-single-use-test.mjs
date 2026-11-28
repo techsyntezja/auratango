@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';import {discountPreviewEngine} from './discount-preview-engine.mjs';
+const rows=[{code:'ONCE10',enabled:true,starts_on:'2026-01-01',class_type:'all',kind:'percent',value:10}];const engine=discountPreviewEngine(rows,()=>new Date('2026-11-28T12:00:00Z'));const input={code:'once10',offer:'partnered',party:'solo',months:1};
+assert.equal(engine.quote(input).total,234);assert(!rows[0].used_at,'Applying a code must not consume it');
+const results=await Promise.all([Promise.resolve().then(()=>engine.redeem({...input,checkout:'order-one'})),Promise.resolve().then(()=>engine.redeem({...input,checkout:'order-two'}))]);assert.equal(results.filter(r=>r.valid).length,1);assert.equal(rows[0].used_order,'order-one');assert.equal(engine.quote(input).valid,false);assert.equal(engine.redeem({...input,checkout:'order-one'}).total,234,'A retry of the same checkout is idempotent');assert.equal(engine.quote({...input,checkout:'order-one'}).valid,true);assert.equal(engine.redeem({...input,party:'couple',checkout:'order-one'}).valid,false);
+rows[0].enabled=false;rows[0].enabled=true;assert.equal(engine.redeem({...input,checkout:'order-three'}).valid,false,'Re-enabling does not reset usage');
+rows.push({code:'DISABLED',enabled:false,starts_on:'2026-01-01',class_type:'all',kind:'fixed',value:10});assert.equal(engine.redeem({...input,code:'DISABLED',checkout:'order-new'}).valid,false);
+console.log('PASS: single redemption, concurrent checkout rejection, same-checkout retry, quote without consumption and re-enable cannot reset usage.');

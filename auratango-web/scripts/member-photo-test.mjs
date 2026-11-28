@@ -1,0 +1,15 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const html=fs.readFileSync('dist/index.html','utf8'),start=html.indexOf('// Profile photos stay on this device'),end=html.indexOf('async function restoreMemberSignIn()',start);
+const saved=new Map();let decoded=0,closed=0;
+const context={memberAuth:{user:{id:'one'}},localStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v),removeItem:k=>saved.delete(k)},L:en=>en,ESC:v=>String(v),I:()=>'',render(){},memberAccount:()=>'<p>Details</p>',memberShell:()=>'<div class="avatar">A</div>',createImageBitmap:async()=>{decoded++;return {width:1000,height:600,close(){closed++;}};},document:{createElement:()=>({getContext:()=>({fillRect(){},drawImage(){}}),toDataURL:()=> 'data:image/jpeg;base64,YWJj'})}};
+vm.createContext(context);vm.runInContext(html.slice(start,end),context);
+assert.match(context.memberPhotoEditor(),/Maximum 5 MB/);
+await context.uploadMemberProfilePhoto({files:[{type:'image/svg+xml',size:40}]});assert.equal(decoded,0);assert.match(context.memberPhotoEditor(),/Choose a JPEG/);
+await context.uploadMemberProfilePhoto({files:[{type:'image/png',size:6*1024*1024}]});assert.equal(decoded,0);assert.match(context.memberPhotoEditor(),/too large/);
+await context.uploadMemberProfilePhoto({files:[{type:'image/jpeg',size:400}]});assert.equal(closed,1);assert.equal(context.memberProfilePhoto(),'data:image/jpeg;base64,YWJj');assert.match(context.memberShell('account'),/member-photo-avatar/);assert.match(context.memberAccount(),/Change photo/);
+context.memberAuth.user={id:'two'};assert.equal(context.memberProfilePhoto(),'');context.memberAuth.user={id:'one'};assert(context.memberProfilePhoto());
+context.removeMemberProfilePhoto();assert.equal(context.memberProfilePhoto(),'');assert(!context.memberShell('account').includes('member-photo-avatar'));
+saved.set('aura-profile-photo:one','javascript:alert(1)');assert.equal(context.memberProfilePhoto(),'');
+context.createImageBitmap=async()=>{throw Error('invalid image');};await context.uploadMemberProfilePhoto({files:[{type:'image/png',size:100}]});assert.match(context.memberPhotoEditor(),/Unable to save/);
+context.memberAuth.user=null;await context.uploadMemberProfilePhoto({files:[{type:'image/jpeg',size:100}]});assert.equal(context.memberPhotoKey(),'');
+console.log('PASS: photo format/size validation, image processing, per-account persistence, avatar display, removal, malformed storage and decode errors.');

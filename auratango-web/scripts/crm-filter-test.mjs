@@ -22,3 +22,8 @@ const follow={value:''};await listeners.change({target:{value:'2026-11-28',form:
 await submit('lead-filters',{search:'',status:'',source:'',follow:'dated',date:''});assert.match(node('#status').textContent,/Choose a follow-up date/);
 await listeners.click({target:{closest:()=>({dataset:{action:'clear'}})}});assert.equal(vm.runInContext('filteredLeads().length',context),2);
 console.log('PASS: dashboard filter events, date selection without lost button, schedule match/empty/clear, combined lead filters, follow-up date and validation.');
+
+vm.runInContext(`discounts=[{id:'active',code:'ACTIVE10',enabled:true,starts_on:'2020-01-01',value:10,kind:'percent',class_type:'all'},{id:'disabled',code:'DISABLED10',enabled:false,starts_on:'2020-01-01',value:10,kind:'percent',class_type:'all'},{id:'expired',code:'EXPIRED10',enabled:true,starts_on:'2020-01-01',ends_on:'2020-02-01',value:10,kind:'percent',class_type:'all'}];renderDiscounts();`,context);
+for(const code of ['ACTIVE10','DISABLED10','EXPIRED10'])assert(node('#workspace').innerHTML.includes(code));
+assert.match(node('#workspace').innerHTML,/Disabled/);assert.match(node('#workspace').innerHTML,/Expired/);assert(!node('#workspace').innerHTML.includes('discount-status'));
+console.log('PASS: all discount codes stay visible, including disabled and expired.');

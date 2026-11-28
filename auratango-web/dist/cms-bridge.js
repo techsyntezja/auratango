@@ -72,3 +72,8 @@ if (configured) {
 } else applyPrivateLessonCatalog({});
 
 window.validateClassDiscount=(code,offer,party,months)=>request('/rest/v1/rpc/validate_class_discount',{method:'POST',body:JSON.stringify({p_code:code,p_offer:offer,p_party:party,p_months:months})});
+
+const standardDiscountQuote=window.validateClassDiscount;
+async function localDiscountRequest(action,code,offer,party,months,checkout){const response=await fetch('/api/discount-preview',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,code,offer,party,months,checkout})});if(!response.ok)throw Error('Unable to check this discount. Please retry.');return response.json();}
+window.validateClassDiscount=(code,offer,party,months,checkout)=>window.AURA_CONFIG?.localDiscountPreview?localDiscountRequest('quote',code,offer,party,months,checkout):standardDiscountQuote(code,offer,party,months);
+window.redeemClassDiscount=(code,offer,party,months,checkout)=>{if(!window.AURA_CONFIG?.localDiscountPreview)throw Error('Single-use discount payment confirmation is not configured yet.');return localDiscountRequest('redeem',code,offer,party,months,checkout);};

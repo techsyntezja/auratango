@@ -1,0 +1,11 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const html=fs.readFileSync('dist/index.html','utf8'),start=html.indexOf('function continuePaymentAsGuest('),end=html.indexOf('function finishPackageSuccess(',start);let destination='',modalBody='',closed=0;
+const context={V:{orders:[{id:'order-1',request:'request-1',target:'partnered',total:260}],requests:[{id:'request-1',email:'guest@example.invalid'}]},memberAuth:{user:null},state:{member:true},packageSuccessTimer:null,clearTimeout(){},closeModal(){closed++;},saveV(){},navigate:path=>destination=path,L:en=>en,I:()=>'',ESC:x=>x,itemTitle:()=> 'Partner groups',money:x=>x+' PLN',brandedPopupHeading:x=>x,modal:(title,body)=>modalBody=body};
+vm.createContext(context);vm.runInContext(html.slice(start,end),context);
+context.showPostPaymentChoice('order-1');assert.match(modalBody,/Continue as guest/);assert.match(modalBody,/Sign in/);assert.equal(destination,'','No automatic redirect');
+context.continuePaymentAsGuest('order-1');assert.equal(destination,'/receipt/order-1');assert.equal(context.state.member,false);
+context.signInAfterPayment('order-1');assert.equal(destination,'/login');assert.equal(context.memberAuth.email,'guest@example.invalid');assert.equal(context.memberAuth.afterPayment,true);
+context.memberAuth.user={email:'guest@example.invalid'};context.signInAfterPayment('order-1');assert.equal(destination,'/member/purchases');
+assert(!html.includes('Taking you to your account and purchase details…'));
+assert(html.includes('showPostPaymentChoice(order.id);'));
+console.log('PASS: post-payment guest/sign-in choices, guest receipt without authentication, email prefill, signed-in account destination and no forced redirect.');
